@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBand Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            padding: 48px 0 0;
+            width: 250px;
+            border-right: 1px solid #dee2e6;
+            padding: 20px;
+        }
+
+        .sidebar .nav-item {
+            padding-left: 20px;
+            text-align: left;
+            font-weight: bold;
+            color: grey;
+            background-color: #F0F0F0;
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            transition: 0.5s ease-in-out;
+        }
+
+        .sidebar .nav-link {
+            color: rgb(52, 52, 52);
+        }
+
+        .sidebar .nav-link:hover {
+            color: black;
+        }
+
+        .sidebar .nav-item .bi {
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+
+        .sidebar .nav-item:hover {
+            color: black;
+        }
+
+        .main-content {
+            margin-left: 200px;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house"
+                    viewBox="0 0 16 16">
+                    <path
+                        d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z" />
+                </svg>
+                <a href="{{ url_for('home') }}" class="nav-link btn my-2">Home</a>
+            </li>
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-clock-history" viewBox="0 0 16 16">
+                    <path
+                        d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022zm2.004.45a7 7 0 0 0-.985-.299l.219-.976q.576.129 1.126.342zm1.37.71a7 7 0 0 0-.439-.27l.493-.87a8 8 0 0 1 .979.654l-.615.789a7 7 0 0 0-.418-.302zm1.834 1.79a7 7 0 0 0-.653-.796l.724-.69q.406.429.747.91zm.744 1.352a7 7 0 0 0-.214-.468l.893-.45a8 8 0 0 1 .45 1.088l-.95.313a7 7 0 0 0-.179-.483m.53 2.507a7 7 0 0 0-.1-1.025l.985-.17q.1.58.116 1.17zm-.131 1.538q.05-.254.081-.51l.993.123a8 8 0 0 1-.23 1.155l-.964-.267q.069-.247.12-.501m-.952 2.379q.276-.436.486-.908l.914.405q-.24.54-.555 1.038zm-.964 1.205q.183-.183.35-.378l.758.653a8 8 0 0 1-.401.432z" />
+                    <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0z" />
+                    <path
+                        d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5" />
+                </svg>
+                <a href="{{ url_for('history') }}" class="nav-link btn my-2">History</a>
+            </li>
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-bell-fill" viewBox="0 0 16 16">
+                    <path
+                        d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901" />
+                </svg>
+                <a href="{{ url_for('notifications') }}" class="nav-link btn my-2">Notification</a>
+            </li>
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-clipboard-fill" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                        d="M10 1.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5zm-5 0A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5v1A1.5 1.5 0 0 1 9.5 4h-3A1.5 1.5 0 0 1 5 2.5zm-2 0h1v1A2.5 2.5 0 0 0 6.5 5h3A2.5 2.5 0 0 0 12 2.5v-1h1a2 2 0 0 1 2 2V14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3.5a2 2 0 0 1 2-2" />
+                </svg>
+                <a href="{{ url_for('history') }}" class="nav-link btn my-2">Monthly report</a>
+            </li>
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-gear-fill" viewBox="0 0 16 16">
+                    <path
+                        d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                </svg>
+                <a href="{{ url_for('settings') }}" class="nav-link btn my-2">Settings</a>
+            </li>
+        </ul>
+    </nav>
+    <div class="main-content">
+        <div class="container">
+            <h1 class="text-center">Sensor Data History</h1>
+            <div class="form-group">
+                <label for="dateFilter">Filter by Date:</label>
+                <input type="date" id="dateFilter" class="form-control">
+            </div>
+            <div id="sensor_data_container" class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Amp</th>
+                            <th>Heart Rate</th>
+                            <th>SpO2</th>
+                            <th>LDR Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sensor_data_body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script>
+        // Function to format date and time
+        function formatDateTime(timestamp) {
+            // Parse timestamp into Date object
+            const dateTime = new Date(timestamp);
+
+            // Convert timestamp to UTC timezone
+            const utcDateTime = new Date(dateTime.getUTCFullYear(), dateTime.getUTCMonth(), dateTime.getUTCDate(),
+                dateTime.getUTCHours(), dateTime.getUTCMinutes(), dateTime.getUTCSeconds());
+
+            // Format date components
+            const year = utcDateTime.getFullYear(); // Get year (YYYY)
+            const month = ('0' + (utcDateTime.getMonth() + 1)).slice(-2); // Get month (01-12)
+            const day = ('0' + utcDateTime.getDate()).slice(-2); // Get day (01-31)
+
+            // Format time components
+            const hours = ('0' + utcDateTime.getHours()).slice(-2); // Get hours (00-23)
+            const minutes = ('0' + utcDateTime.getMinutes()).slice(-2); // Get minutes (00-59)
+            const seconds = ('0' + utcDateTime.getSeconds()).slice(-2); // Get seconds (00-59)
+
+            // Construct formatted date and time string
+            const formattedDate = `${day}/${month}/${year}`;
+            const formattedTime = `${hours}:${minutes}:${seconds}`;
+
+            // Return an object containing formatted date and time
+            return { date: formattedDate, time: formattedTime };
+        }
+
+
+
+
+        // Function to fetch sensor data and display it in the table
+        function fetchSensorData() {
+            // JavaScript to fetch and display sensor data history
+            fetch('/sensor_data')
+                .then(response => response.json())
+                .then(data => {
+                    const sensorDataBody = document.getElementById('sensor_data_body');
+                    // Clear existing rows
+                    sensorDataBody.innerHTML = '';
+                    // Loop through the data and create table rows to display it
+                    data.forEach(entry => {
+                        // Format date and time
+                        const formattedDateTime = formatDateTime(entry.timestamp);
+
+                        // Create table row with formatted date and time
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                         <td>${formattedDateTime.time}</td>
+                                         <td>${entry.amp}</td>
+                                         <td>${entry.hr}</td>
+                                         <td>${entry.spo2}</td>
+                                         <td>${entry.ldr}</td>`;
+                        sensorDataBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching sensor data:', error));
+        }
+
+        // Call the fetchSensorData function when the page loads
+        window.onload = fetchSensorData;
+
+        // JavaScript to filter sensor data by date
+        document.getElementById('dateFilter').addEventListener('change', function () {
+            const selectedDate = this.value;
+            const startTimestamp = new Date(selectedDate).toISOString(); // Start of selected date
+            const nextDay = new Date(selectedDate);
+            nextDay.setDate(nextDay.getDate() + 1); // Increment date by one to get the end of the selected date
+            const endTimestamp = nextDay.toISOString(); // End of selected date
+            fetch(`/sensor_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+                .then(response => response.json())
+                .then(data => {
+                    const sensorDataBody = document.getElementById('sensor_data_body');
+                    // Clear existing rows
+                    sensorDataBody.innerHTML = '';
+                    // Loop through the fetched data and create table rows to display it
+                    data.forEach(entry => {
+                        // Format date and time
+                        const formattedDateTime = formatDateTime(entry.timestamp);
+
+                        // Create table row with formatted date and time
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                 <td>${formattedDateTime.time}</td>
+                                 <td>${entry.amp}</td>
+                                 <td>${entry.hr}</td>
+                                 <td>${entry.spo2}</td>
+                                 <td>${entry.ldr}</td>`;
+                        sensorDataBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
+        });
+
+
+    </script>
+</body>
+
+</html>

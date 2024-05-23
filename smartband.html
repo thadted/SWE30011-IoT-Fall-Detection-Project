@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBand Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="static/main.css" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="sidebar">
+        <h1 class="text-center"> My Home </h1>
+        <br />
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house"
+                    viewBox="0 0 16 16">
+                    <path
+                        d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z" />
+                </svg>
+                <a href="{{ url_for('home') }}" class="nav-link btn my-2">Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-clock-history" viewBox="0 0 16 16">
+                    <path
+                        d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022zm2.004.45a7 7 0 0 0-.985-.299l.219-.976q.576.129 1.126.342zm1.37.71a7 7 0 0 0-.439-.27l.493-.87a8 8 0 0 1 .979.654l-.615.789a7 7 0 0 0-.418-.302zm1.834 1.79a7 7 0 0 0-.653-.796l.724-.69q.406.429.747.91zm.744 1.352a7 7 0 0 0-.214-.468l.893-.45a8 8 0 0 1 .45 1.088l-.95.313a7 7 0 0 0-.179-.483m.53 2.507a7 7 0 0 0-.1-1.025l.985-.17q.1.58.116 1.17zm-.131 1.538q.05-.254.081-.51l.993.123a8 8 0 0 1-.23 1.155l-.964-.267q.069-.247.12-.501m-.952 2.379q.276-.436.486-.908l.914.405q-.24.54-.555 1.038zm-.964 1.205q.183-.183.35-.378l.758.653a8 8 0 0 1-.401.432z" />
+                    <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0z" />
+                    <path
+                        d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5" />
+                </svg>
+                <a href="{{ url_for('history') }}" class="nav-link btn my-2">History</a>
+            </li>
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-bell-fill" viewBox="0 0 16 16">
+                    <path
+                        d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901" />
+                </svg>
+                <a href="{{ url_for('notifications') }}" class="nav-link btn my-2">Notification</a>
+            </li>
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-clipboard-fill" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                        d="M10 1.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5zm-5 0A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5v1A1.5 1.5 0 0 1 9.5 4h-3A1.5 1.5 0 0 1 5 2.5zm-2 0h1v1A2.5 2.5 0 0 0 6.5 5h3A2.5 2.5 0 0 0 12 2.5v-1h1a2 2 0 0 1 2 2V14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3.5a2 2 0 0 1 2-2" />
+                </svg>
+                <a href="{{ url_for('history') }}" class="nav-link btn my-2">Monthly report</a>
+            </li>
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-gear-fill" viewBox="0 0 16 16">
+                    <path
+                        d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                </svg>
+                <a href="{{ url_for('settings') }}" class="nav-link btn my-2">Settings</a>
+            </li>
+        </ul>
+    </nav>
+    <div class="main-content">
+        <div class="container">
+            <div class="info-card row">
+                <h1 class="text-center col-md-12">
+                    SmartBand Interface
+                </h1>
+                <div class="thumbnail col-md-4">
+                    <img src="static/smartband.png" alt="smartband">
+                </div>
+                <div class="col-md-7 row">
+                    <div class="card col-md-3 status-card">
+                        <div class="card-header">
+                            Fall Status
+                        </div>
+                        <div class="card-body fall">
+                            {% if status_data.fall == 1 %}
+                            <p class="card-text text-danger">Fall Detected</p>
+                            {% else %}
+                            <p class="card-text text-success">Normal</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card col-md-3 status-card">
+                        <div class="card-header">
+                            HR Status
+                        </div>
+                        <div class="card-body hr">
+                            {% if status_data.hr_unusual == 1 %}
+                            <p class="card-text text-danger">Unusual Heart Rate</p>
+                            {% else %}
+                            <p class="card-text text-success">Normal</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card col-md-3 status-card">
+                        <div class="card-header">
+                            SpO2 Status
+                        </div>
+                        <div class="card-body spo2">
+                            {% if status_data.spo2_unusual == 1 %}
+                            <p class="card-text text-danger">Unusual SpO2</p>
+                            {% else %}
+                            <p class="card-text text-success">Normal</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <br />
+                <h2 class="text-center col-md-12" style="margin-top:20px;">Status Information</h2>
+                <div class="row col-md-12">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Live Data
+                            </div>
+                            <div class="card-body top-card">
+                                <h5 class="card-title text-primary">Current Data</h5>
+                                <p class="card-text">Amplitude: <span id="amp"></span></p>
+                                <p class="card-text">Heart Rate: <span id="heart_rate"></span></p>
+                                <p class="card-text">SPO2: <span id="spo2"></span></p>
+                                <p class="card-text">Surronding Light Value: <span id="ldr_value"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Live Data
+                            </div>
+                            <div class="card-body top-card">
+                                <h5 class="card-title text-primary">Actuator Status</h5>
+                                <p class="card-text">Buzzer State: <span id="buzzer_state"></span></p>
+                                <p class="card-text">LED State: <span id="led_state"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <br />
+                <br />
+                <br />
+                <h2 class="text-center col-md-12" style="margin-top:20px;"> Sensor Data Graph</h2>
+                <br />
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Amplitude
+                            </div>
+                            <div class="card-body">
+                                <canvas id="ampChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Heart Rate
+                            </div>
+                            <div class="card-body">
+                                <canvas id="hrChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                SpO2
+                            </div>
+                            <div class="card-body">
+                                <canvas id="spo2Chart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Surronding Light Value
+                            </div>
+                            <div class="card-body">
+                                <canvas id="ldrChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <br />
+                <br />
+                <br />
+                <br />
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script>
+        var ampData = [];
+        var hrData = [];
+        var spo2Data = [];
+        var ldrData = [];
+
+        var ampChart = createChart('ampChart', 'Amp', 'rgba(54, 162, 235, 0.2)', 'rgb(54, 162, 235)');
+        var hrChart = createChart('hrChart', 'Heart Rate', 'rgba(255, 99, 132, 0.2)', 'rgb(255, 99, 132)');
+        var spo2Chart = createChart('spo2Chart', 'SPO2', 'rgba(75, 192, 192, 0.2)', 'rgb(75, 192, 192)');
+        var ldrChart = createChart('ldrChart', 'LDR Value', 'rgba(255, 206, 86, 0.2)', 'rgb(255, 206, 86)');
+
+        function createChart(chartId, label, backgroundColor, borderColor) {
+            var ctx = document.getElementById(chartId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: label,
+                        data: [],
+                        borderColor: borderColor,
+                        backgroundColor: backgroundColor,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+        }
+
+        function fetchActuatorStatus() {
+            fetch('/actuator_status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('buzzer_state').innerText = data.buzzer_state ? 'On' : 'Off';
+                    // Check if LED state is "Auto" and set accordingly
+                    if (data.led_state === "Auto") {
+                        document.getElementById('led_state').innerText = 'Auto';
+                    } else {
+                        document.getElementById('led_state').innerText = data.led_state ? 'On' : 'Off';
+                    }
+                });
+        }
+
+        function acknowledgeStatus() {
+            // Send AJAX request to update all status values to 0
+            fetch('/acknowledge_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ all: true })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Update the UI to reflect all status changes
+                        document.querySelectorAll('.card-text.text-danger').forEach(cardText => {
+                            cardText.innerText = 'Normal';
+                            cardText.classList.remove('text-danger');
+                            cardText.classList.add('text-success');
+                        });
+                    } else {
+                        console.error('Failed to acknowledge status:', response.statusText);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function fetchStatusData() {
+            fetch('/status_data')
+                .then(response => response.json())
+                .then(data => {
+                    // Update fall status
+                    const fallStatus = data.fall == 1 ? 'Fall Detected' : 'Normal';
+                    document.querySelector('.card-body.fall .card-text').innerText = fallStatus;
+                    document.querySelector('.card-body.fall .card-text').classList.toggle('text-danger', data.fall == 1);
+                    document.querySelector('.card-body.fall .card-text').classList.toggle('text-success', data.fall == 0);
+
+                    // Update heart rate status
+                    const hrStatus = data.hr_unusual == 1 ? 'Unusual Heart Rate' : 'Normal';
+                    document.querySelector('.card-body.hr .card-text').innerText = hrStatus;
+                    document.querySelector('.card-body.hr .card-text').classList.toggle('text-danger', data.hr_unusual == 1);
+                    document.querySelector('.card-body.hr .card-text').classList.toggle('text-success', data.hr_unusual == 0);
+
+                    // Update SpO2 status
+                    const spo2Status = data.spo2_unusual == 1 ? 'Unusual SpO2' : 'Normal';
+                    document.querySelector('.card-body.spo2 .card-text').innerText = spo2Status;
+                    document.querySelector('.card-body.spo2 .card-text').classList.toggle('text-danger', data.spo2_unusual == 1);
+                    document.querySelector('.card-body.spo2 .card-text').classList.toggle('text-success', data.spo2_unusual == 0);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function checkStatusForAcknowledge() {
+            // Check if any of the status conditions meet the criteria for displaying the "Acknowledge" button
+            const fallStatus = document.querySelector('.card-body.fall .card-text').innerText.trim();
+            const hrStatus = document.querySelector('.card-body.hr .card-text').innerText.trim();
+            const spo2Status = document.querySelector('.card-body.spo2 .card-text').innerText.trim();
+
+            if (fallStatus === 'Fall Detected' || hrStatus === 'Unusual Heart Rate' || spo2Status === 'Unusual SpO2') {
+                document.querySelector('.ack-btn-div').style.display = 'block';
+            } else {
+                document.querySelector('.ack-btn-div').style.display = 'none';
+            }
+        }
+
+        setInterval(fetchStatusData.bind(window), 5000);
+        setInterval(checkStatusForAcknowledge, 1000);
+
+        function fetchData() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('amp').innerText = data.amp;
+                    document.getElementById('heart_rate').innerText = data.heart_rate;
+                    document.getElementById('spo2').innerText = data.spo2;
+                    document.getElementById('ldr_value').innerText = data.ldr_value;
+
+                    // Update chart data
+                    updateChartData(ampData, data.amp, ampChart);
+                    updateChartData(hrData, data.heart_rate, hrChart);
+                    updateChartData(spo2Data, data.spo2, spo2Chart);
+                    updateChartData(ldrData, data.ldr_value, ldrChart);
+                });
+        }
+
+        function updateChartData(chartData, newValue, chart) {
+            chartData.push({
+                timestamp: new Date().toLocaleTimeString(),
+                value: newValue
+            });
+
+            if (chartData.length > 10) {
+                chartData.shift();
+            }
+
+            chart.data.labels = chartData.map(entry => entry.timestamp);
+            chart.data.datasets[0].data = chartData.map(entry => entry.value);
+            chart.update();
+        }
+
+        setInterval(() => {
+            const d = new Date();
+            const hr = d.getHours();
+            const min = d.getMinutes();
+            const sec = d.getSeconds();
+            const hrRotation = 30 * hr + min / 2;
+            const minRotation = 6 * min;
+            const secRotation = 6 * sec;
+
+            const hourHands = document.querySelectorAll('.hour');
+            const minuteHands = document.querySelectorAll('.minute');
+            const secondHands = document.querySelectorAll('.second');
+
+            hourHands.forEach(hand => {
+                hand.style.transform = `rotate(${hrRotation}deg)`;
+            });
+
+            minuteHands.forEach(hand => {
+                hand.style.transform = `rotate(${minRotation}deg)`;
+            });
+
+            secondHands.forEach(hand => {
+                hand.style.transform = `rotate(${secRotation}deg)`;
+            });
+        }, 1000);
+
+
+        function fetchWeather() {
+            fetch('http://api.weatherapi.com/v1/current.json?key=76113fd1052547adaa131643242105&q=Kuching&aqi=no')
+                .then(response => response.json())
+                .then(data => {
+                    const temperature = data.current.temp_c;
+                    const conditionText = data.current.condition.text;
+                    const humidity = `Humidity: ${data.current.humidity}%`;
+                    const wind = `Wind: ${data.current.wind_kph} km/h ${data.current.wind_dir}`;
+                    const weatherIcon = data.current.condition.icon;
+
+                    document.getElementById('temperature').innerText = `Temperature: ${temperature}°C`;
+                    document.getElementById('condition').innerText = `Condition: ${conditionText}`;
+                    document.getElementById('humidity').innerText = humidity;
+                    document.getElementById('wind').innerText = wind;
+                    document.getElementById('weather-icon').src = 'https:' + weatherIcon;
+                })
+                .catch(error => console.error('Error fetching weather:', error));
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hours = (now.getHours() % 12 || 12).toString().padStart(2, '0'); // Convert to 12-hour format
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const meridiem = now.getHours() >= 12 ? 'PM' : 'AM'; // Determine AM/PM
+            const digitalTime = `<span class="bold">${hours}:${minutes}:${seconds} ${meridiem}</span>`; // Wrap time in a span with bold class
+            const date = now.toLocaleDateString(); // Get the date
+
+            // Set both time and date in the same element
+            document.getElementById('digitalTime').innerHTML = digitalTime + ' ' + date;
+        }
+
+        // Update clock every second
+        setInterval(updateClock, 1000);
+
+        // Update clock every second
+        setInterval(updateClock, 1000);
+
+        // Initial fetch when the page loads
+        fetchWeather();
+
+        // Periodically update weather data (e.g., every 5 minutes)
+        setInterval(fetchWeather, 300000); // 5 minutes in milliseconds
+
+
+        // Fetch live data every 5 seconds
+        setInterval(fetchData, 5000);
+        // Fetch actuator status every 5 seconds
+        setInterval(fetchActuatorStatus, 5000);
+        // Fetch historical data and actuator status on page load
+        window.onload = function () {
+            fetchData();
+            fetchActuatorStatus();
+            fetchStatusData();
+            checkStatusForAcknowledge();
+        };
+
+    </script>
+
+</body>
+
+</html>
