@@ -54,76 +54,91 @@
     </nav>
     <div class="main-content">
         <div class="container">
-            <h1 class="text-center">Sensor Data History</h1>
-            <div class="form-group">
-                <label for="dateFilter">Filter by Date:</label>
-                <input type="date" id="dateFilter" class="form-control">
+            <h1 class="text-center">Historical Data</h1>
+            <div class="text-center">
+                <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" id="pills-home-tab" data-toggle="pill" href="#pills-home" role="tab"
+                            aria-controls="pills-home" aria-selected="true">SmartBand</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab"
+                            aria-controls="pills-profile" aria-selected="false">Environment</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="pills-contact-tab" data-toggle="pill" href="#pills-contact" role="tab"
+                            aria-controls="pills-contact" aria-selected="false">SmartDoor</a>
+                    </li>
+                </ul>
             </div>
-            <div id="sensor_data_container" class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Amp</th>
-                            <th>Heart Rate</th>
-                            <th>SpO2</th>
-                            <th>LDR Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="sensor_data_body"></tbody>
-                </table>
+            <div class="tab-content" id="pills-tabContent">
+                <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
+                    <div class="form-group">
+                        <label for="dateFilter">Filter by Date:</label>
+                        <input type="date" id="dateFilter" class="form-control">
+                    </div>
+                    <div id="sensor_data_container" class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Amp</th>
+                                    <th>Heart Rate</th>
+                                    <th>SpO2</th>
+                                    <th>LDR Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sensor_data_body"></tbody>
+                        </table>
+                    </div>
+                    <br />
+                    <br />
+                    <div class="container">
+                        <h3 class="text-center">Historical Data Graphs</h3>
+                        <div class="row">
+                            <div class="col-md-12" width="900" height="600">
+                                <canvas id="ampChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">2
+                </div>
+                <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">3
+                </div>
             </div>
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
-    <script>
-        // Function to format date and time
-        function formatDateTime(timestamp) {
-            // Parse timestamp into Date object
-            const dateTime = new Date(timestamp);
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 
-            // Convert timestamp to UTC timezone
+    <script>
+        function formatDateTime(timestamp) {
+            const dateTime = new Date(timestamp);
             const utcDateTime = new Date(dateTime.getUTCFullYear(), dateTime.getUTCMonth(), dateTime.getUTCDate(),
                 dateTime.getUTCHours(), dateTime.getUTCMinutes(), dateTime.getUTCSeconds());
-
-            // Format date components
-            const year = utcDateTime.getFullYear(); // Get year (YYYY)
-            const month = ('0' + (utcDateTime.getMonth() + 1)).slice(-2); // Get month (01-12)
-            const day = ('0' + utcDateTime.getDate()).slice(-2); // Get day (01-31)
-
-            // Format time components
-            const hours = ('0' + utcDateTime.getHours()).slice(-2); // Get hours (00-23)
-            const minutes = ('0' + utcDateTime.getMinutes()).slice(-2); // Get minutes (00-59)
-            const seconds = ('0' + utcDateTime.getSeconds()).slice(-2); // Get seconds (00-59)
-
-            // Construct formatted date and time string
+            const year = utcDateTime.getFullYear();
+            const month = ('0' + (utcDateTime.getMonth() + 1)).slice(-2);
+            const day = ('0' + utcDateTime.getDate()).slice(-2);
+            const hours = ('0' + utcDateTime.getHours()).slice(-2);
+            const minutes = ('0' + utcDateTime.getMinutes()).slice(-2);
+            const seconds = ('0' + utcDateTime.getSeconds()).slice(-2);
             const formattedDate = `${day}/${month}/${year}`;
             const formattedTime = `${hours}:${minutes}:${seconds}`;
-
-            // Return an object containing formatted date and time
             return { date: formattedDate, time: formattedTime };
         }
 
-
-
-
-        // Function to fetch sensor data and display it in the table
         function fetchSensorData() {
-            // JavaScript to fetch and display sensor data history
             fetch('/sensor_data')
                 .then(response => response.json())
                 .then(data => {
                     const sensorDataBody = document.getElementById('sensor_data_body');
-                    // Clear existing rows
                     sensorDataBody.innerHTML = '';
-                    // Loop through the data and create table rows to display it
                     data.forEach(entry => {
-                        // Format date and time
                         const formattedDateTime = formatDateTime(entry.timestamp);
-
-                        // Create table row with formatted date and time
                         const row = document.createElement('tr');
                         row.innerHTML = `<td>${formattedDateTime.date}</td>
                                          <td>${formattedDateTime.time}</td>
@@ -137,40 +152,106 @@
                 .catch(error => console.error('Error fetching sensor data:', error));
         }
 
-        // Call the fetchSensorData function when the page loads
         window.onload = fetchSensorData;
 
-        // JavaScript to filter sensor data by date
         document.getElementById('dateFilter').addEventListener('change', function () {
             const selectedDate = this.value;
-            const startTimestamp = new Date(selectedDate).toISOString(); // Start of selected date
+            const startTimestamp = new Date(selectedDate).toISOString();
             const nextDay = new Date(selectedDate);
-            nextDay.setDate(nextDay.getDate() + 1); // Increment date by one to get the end of the selected date
-            const endTimestamp = nextDay.toISOString(); // End of selected date
+            nextDay.setDate(nextDay.getDate() + 1);
+            const endTimestamp = nextDay.toISOString();
             fetch(`/sensor_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
                 .then(response => response.json())
                 .then(data => {
                     const sensorDataBody = document.getElementById('sensor_data_body');
-                    // Clear existing rows
                     sensorDataBody.innerHTML = '';
-                    // Loop through the fetched data and create table rows to display it
                     data.forEach(entry => {
-                        // Format date and time
                         const formattedDateTime = formatDateTime(entry.timestamp);
-
-                        // Create table row with formatted date and time
                         const row = document.createElement('tr');
                         row.innerHTML = `<td>${formattedDateTime.date}</td>
-                                 <td>${formattedDateTime.time}</td>
-                                 <td>${entry.amp}</td>
-                                 <td>${entry.hr}</td>
-                                 <td>${entry.spo2}</td>
-                                 <td>${entry.ldr}</td>`;
+                                         <td>${formattedDateTime.time}</td>
+                                         <td>${entry.amp}</td>
+                                         <td>${entry.hr}</td>
+                                         <td>${entry.spo2}</td>
+                                         <td>${entry.ldr}</td>`;
                         sensorDataBody.appendChild(row);
                     });
                 })
                 .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
         });
+
+        $('a[data-toggle="pill"]').on('shown.bs.tab', function (e) {
+            if (e.target.id === 'pills-home-tab') {
+                $('#sensor_data_container').show();
+                $('#dateFilter').show();
+                fetchSensorData();
+            } else {
+                $('#sensor_data_container').hide();
+                $('#dateFilter').hide();
+            }
+        });
+
+        function fetchAmpDataAndPlotGraph() {
+            fetch('/sensor_data')
+                .then(response => response.json())
+                .then(data => {
+                    const timestamps = data.map(entry => formatDateTime(entry.timestamp));
+                    const dateTimeLabels = timestamps.map(entry => `${entry.date} ${entry.time}`);
+                    const ampValues = data.map(entry => entry.amp);
+                    const hrValues = data.map(entry => entry.hr);
+                    const spo2Values = data.map(entry => entry.spo2);
+
+                    const ctx = document.getElementById('ampChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: dateTimeLabels,
+                            datasets: [
+                                {
+                                    label: 'Amplitude',
+                                    data: ampValues,
+                                    fill: false,
+                                    borderColor: 'rgb(75, 192, 192)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'Heart Rate',
+                                    data: hrValues,
+                                    fill: false,
+                                    borderColor: 'rgb(255, 99, 132)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'SpO2',
+                                    data: spo2Values,
+                                    fill: false,
+                                    borderColor: 'rgb(54, 162, 235)',
+                                    tension: 0.1
+                                }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Date and Time'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Values'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching and plotting data:', error));
+        }
+
+        fetchAmpDataAndPlotGraph();
 
 
     </script>

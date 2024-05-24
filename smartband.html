@@ -78,7 +78,7 @@
                         <div class="card-header">
                             HR Status
                         </div>
-                        <div class="card-body hr">
+                        <div class="card-body hr-">
                             {% if status_data.hr_unusual == 1 %}
                             <p class="card-text text-danger">Unusual Heart Rate</p>
                             {% else %}
@@ -90,7 +90,7 @@
                         <div class="card-header">
                             SpO2 Status
                         </div>
-                        <div class="card-body spo2">
+                        <div class="card-body spo2-">
                             {% if status_data.spo2_unusual == 1 %}
                             <p class="card-text text-danger">Unusual SpO2</p>
                             {% else %}
@@ -277,15 +277,15 @@
 
                     // Update heart rate status
                     const hrStatus = data.hr_unusual == 1 ? 'Unusual Heart Rate' : 'Normal';
-                    document.querySelector('.card-body.hr .card-text').innerText = hrStatus;
-                    document.querySelector('.card-body.hr .card-text').classList.toggle('text-danger', data.hr_unusual == 1);
-                    document.querySelector('.card-body.hr .card-text').classList.toggle('text-success', data.hr_unusual == 0);
+                    document.querySelector('.card-body.hr- .card-text').innerText = hrStatus;
+                    document.querySelector('.card-body.hr- .card-text').classList.toggle('text-danger', data.hr_unusual == 1);
+                    document.querySelector('.card-body.hr- .card-text').classList.toggle('text-success', data.hr_unusual == 0);
 
                     // Update SpO2 status
                     const spo2Status = data.spo2_unusual == 1 ? 'Unusual SpO2' : 'Normal';
-                    document.querySelector('.card-body.spo2 .card-text').innerText = spo2Status;
-                    document.querySelector('.card-body.spo2 .card-text').classList.toggle('text-danger', data.spo2_unusual == 1);
-                    document.querySelector('.card-body.spo2 .card-text').classList.toggle('text-success', data.spo2_unusual == 0);
+                    document.querySelector('.card-body.spo2- .card-text').innerText = spo2Status;
+                    document.querySelector('.card-body.spo2- .card-text').classList.toggle('text-danger', data.spo2_unusual == 1);
+                    document.querySelector('.card-body.spo2- .card-text').classList.toggle('text-success', data.spo2_unusual == 0);
                 })
                 .catch(error => {
                     console.error('Error:', error);

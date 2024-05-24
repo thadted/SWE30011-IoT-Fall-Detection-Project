@@ -175,11 +175,6 @@ def home():
     return render_template('index.html', status_data=status_data)
 
 
-@app.route('/report')
-def report():
-    return render_template('report.html')
-
-
 def fetch_notifications(filter_option):
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)

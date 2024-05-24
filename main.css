@@ -247,3 +247,7 @@ canvas {
     max-height: 250px;
     min-height: 250px;
 }
+
+.btn-read {
+    position: inherit;
+}
