@@ -214,3 +214,36 @@ canvas {
     min-width: 180px;
     margin-right: 5px;
 }
+
+.center {
+    margin: 0 auto;
+}
+
+.amp {
+    background-color: rgba(54, 162, 235, 0.2);
+}
+
+.hr {
+    background-color: rgba(255, 99, 132, 0.2);
+}
+
+.spo2 {
+    background-color: rgba(75, 192, 192, 0.2)
+}
+
+.ldr {
+    background-color: rgba(255, 206, 86, 0.2);
+}
+
+canvas {
+    max-width: 100%;
+}
+
+.text-secondary {
+    position: relative;
+}
+
+.top-card {
+    max-height: 250px;
+    min-height: 250px;
+}
