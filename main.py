@@ -94,7 +94,7 @@ def update_fall_status():
     # Update fall status with timestamp
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    message = 'We have detect a potential fall in the smartband at ' + current_time + '/n'
+    message = 'We have detect a potential fall in the smartband at ' + current_time
 
     response = send_message(bot_token, chat_id, message)
     print(response)
@@ -116,7 +116,7 @@ def update_hr_status():
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     message = 'We have detect a unusual heart rate activity in the smartband at ' + \
-        current_time + '/n'
+        current_time
 
     response = send_message(bot_token, chat_id, message)
     print(response)
@@ -131,7 +131,7 @@ def update_spo2_status():
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     message = 'We have detect a unusual SpO2 activity in the smartband at ' + \
-        current_time + '/n'
+        current_time
 
     response = send_message(bot_token, chat_id, message)
     print(response)
