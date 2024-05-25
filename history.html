@@ -90,6 +90,9 @@
                                 </tr>
                             </thead>
                             <tbody id="sensor_data_body"></tbody>
+                            <nav aria-label="Page navigation example">
+                                <ul class="pagination justify-content-center" id="pagination"></ul>
+                            </nav>
                         </table>
                     </div>
                     <br />
@@ -111,10 +114,10 @@
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-
     <script>
         function formatDateTime(timestamp) {
             const dateTime = new Date(timestamp);
@@ -131,29 +134,140 @@
             return { date: formattedDate, time: formattedTime };
         }
 
-        function fetchSensorData() {
+        function fetchSensorData(page = 1) {
             fetch('/sensor_data')
                 .then(response => response.json())
                 .then(data => {
+                    const rowsPerPage = 20;
                     const sensorDataBody = document.getElementById('sensor_data_body');
                     sensorDataBody.innerHTML = '';
-                    data.forEach(entry => {
+
+                    // Calculate pagination details
+                    const totalRows = data.length;
+                    const totalPages = Math.ceil(totalRows / rowsPerPage);
+                    const start = (page - 1) * rowsPerPage;
+                    const end = start + rowsPerPage;
+
+                    // Display rows for the current page
+                    data.slice(start, end).forEach(entry => {
                         const formattedDateTime = formatDateTime(entry.timestamp);
                         const row = document.createElement('tr');
                         row.innerHTML = `<td>${formattedDateTime.date}</td>
-                                         <td>${formattedDateTime.time}</td>
-                                         <td>${entry.amp}</td>
-                                         <td>${entry.hr}</td>
-                                         <td>${entry.spo2}</td>
-                                         <td>${entry.ldr}</td>`;
+                                 <td>${formattedDateTime.time}</td>
+                                 <td>${entry.amp}</td>
+                                 <td>${entry.hr}</td>
+                                 <td>${entry.spo2}</td>
+                                 <td>${entry.ldr}</td>`;
                         sensorDataBody.appendChild(row);
                     });
+
+                    // Update pagination
+                    const pagination = document.getElementById('pagination');
+                    pagination.innerHTML = '';
+                    const maxVisiblePages = 5; // Maximum number of pages to display
+                    let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+
+                    if (totalPages > maxVisiblePages && startPage > 1) {
+                        const liFirst = document.createElement('li');
+                        liFirst.className = 'page-item';
+                        const aFirst = document.createElement('a');
+                        aFirst.className = 'page-link';
+                        aFirst.href = '#';
+                        aFirst.innerText = '1';
+                        aFirst.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(1);
+                        });
+                        liFirst.appendChild(aFirst);
+                        pagination.appendChild(liFirst);
+
+                        const liEllipsis = document.createElement('li');
+                        liEllipsis.className = 'page-item disabled';
+                        const aEllipsis = document.createElement('a');
+                        aEllipsis.className = 'page-link';
+                        aEllipsis.href = '#';
+                        aEllipsis.innerText = '...';
+                        liEllipsis.appendChild(aEllipsis);
+                        pagination.appendChild(liEllipsis);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${i === page ? 'active' : ''}`;
+                        const a = document.createElement('a');
+                        a.className = 'page-link';
+                        a.href = '#';
+                        a.innerText = i;
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(i);
+                        });
+                        li.appendChild(a);
+                        pagination.appendChild(li);
+                    }
+
+                    if (totalPages > maxVisiblePages && endPage < totalPages) {
+                        const liEllipsis = document.createElement('li');
+                        liEllipsis.className = 'page-item disabled';
+                        const aEllipsis = document.createElement('a');
+                        aEllipsis.className = 'page-link';
+                        aEllipsis.href = '#';
+                        aEllipsis.innerText = '...';
+                        liEllipsis.appendChild(aEllipsis);
+                        pagination.appendChild(liEllipsis);
+
+                        const liLast = document.createElement('li');
+                        liLast.className = 'page-item';
+                        const aLast = document.createElement('a');
+                        aLast.className = 'page-link';
+                        aLast.href = '#';
+                        aLast.innerText = totalPages;
+                        aLast.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(totalPages);
+                        });
+                        liLast.appendChild(aLast);
+                        pagination.appendChild(liLast);
+                    }
                 })
                 .catch(error => console.error('Error fetching sensor data:', error));
         }
 
-        window.onload = fetchSensorData;
 
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchSensorData();
+
+            document.getElementById('dateFilter').addEventListener('change', function () {
+                const selectedDate = this.value;
+                const startTimestamp = new Date(selectedDate).toISOString();
+                const nextDay = new Date(selectedDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const endTimestamp = nextDay.toISOString();
+                fetch(`/sensor_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const sensorDataBody = document.getElementById('sensor_data_body');
+                        sensorDataBody.innerHTML = '';
+                        data.forEach(entry => {
+                            const formattedDateTime = formatDateTime(entry.timestamp);
+                            const row = document.createElement('tr');
+                            row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                     <td>${formattedDateTime.time}</td>
+                                     <td>${entry.amp}</td>
+                                     <td>${entry.hr}</td>
+                                     <td>${entry.spo2}</td>
+                                     <td>${entry.ldr}</td>`;
+                            sensorDataBody.appendChild(row);
+                        });
+                    })
+                    .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
+            });
+        });
         document.getElementById('dateFilter').addEventListener('change', function () {
             const selectedDate = this.value;
             const startTimestamp = new Date(selectedDate).toISOString();
@@ -252,8 +366,6 @@
         }
 
         fetchAmpDataAndPlotGraph();
-
-
     </script>
 </body>
 
