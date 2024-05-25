@@ -305,7 +305,7 @@
             }
         });
 
-        function fetchAmpDataAndPlotGraph() {
+        function fetchAmpDataAndPlotGraph1() {
             fetch('/sensor_data')
                 .then(response => response.json())
                 .then(data => {
@@ -365,7 +365,87 @@
                 .catch(error => console.error('Error fetching and plotting data:', error));
         }
 
-        fetchAmpDataAndPlotGraph();
+        function fetchAmpDataAndPlotGraph(selectedDate) {
+            if (!selectedDate) return; // Check if selectedDate is defined
+            const dateParts = selectedDate.split('-'); // Split the date into parts
+            if (dateParts.length !== 3) return; // Check if the date has correct parts (year, month, day)
+            const startTimestamp = new Date(selectedDate).toISOString(); // Convert the date to ISO format
+            const nextDay = new Date(selectedDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const endTimestamp = nextDay.toISOString();
+
+            // Destroy existing chart instance if it exists
+            const existingChart = Chart.getChart('ampChart');
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
+            fetch(`/sensor_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+                .then(response => response.json())
+                .then(data => {
+                    const timestamps = data.map(entry => formatDateTime(entry.timestamp));
+                    const dateTimeLabels = timestamps.map(entry => `${entry.date} ${entry.time}`);
+                    const ampValues = data.map(entry => entry.amp);
+                    const hrValues = data.map(entry => entry.hr);
+                    const spo2Values = data.map(entry => entry.spo2);
+
+                    const ctx = document.getElementById('ampChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: dateTimeLabels,
+                            datasets: [
+                                {
+                                    label: 'Amplitude',
+                                    data: ampValues,
+                                    fill: false,
+                                    borderColor: 'rgb(75, 192, 192)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'Heart Rate',
+                                    data: hrValues,
+                                    fill: false,
+                                    borderColor: 'rgb(255, 99, 132)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'SpO2',
+                                    data: spo2Values,
+                                    fill: false,
+                                    borderColor: 'rgb(54, 162, 235)',
+                                    tension: 0.1
+                                }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Date and Time'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Values'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching and plotting data:', error));
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAmpDataAndPlotGraph1(); // Call fetchAmpDataAndPlotGraph on page load
+
+            document.getElementById('dateFilter').addEventListener('change', function () {
+                const selectedDate = this.value;
+                fetchAmpDataAndPlotGraph(selectedDate); // Update the graph based on the selected date
+            });
+        });
     </script>
 </body>
 
