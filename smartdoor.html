@@ -7,7 +7,7 @@
     <title>SmartBand Dashboard</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="static/main.css" rel="stylesheet">
+    <link href="main.css" rel="stylesheet">
 </head>
 
 <body>
@@ -104,50 +104,6 @@
                 <br />
                 <br />
                 <br />
-                <h2 class="text-center col-md-12" style="margin-top:20px;"> Sensor Data Graph</h2>
-                <br />
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                Amplitude
-                            </div>
-                            <div class="card-body">
-                                <canvas id="ampChart" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                Heart Rate
-                            </div>
-                            <div class="card-body">
-                                <canvas id="hrChart" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                SpO2
-                            </div>
-                            <div class="card-body">
-                                <canvas id="spo2Chart" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                Surronding Light Value
-                            </div>
-                            <div class="card-body">
-                                <canvas id="ldrChart" height="200"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <br />
                 <br />
@@ -158,242 +114,15 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script>
-        var ampData = [];
-        var hrData = [];
-        var spo2Data = [];
-        var ldrData = [];
-
-        var ampChart = createChart('ampChart', 'Amp', 'rgba(54, 162, 235, 0.2)', 'rgb(54, 162, 235)');
-        var hrChart = createChart('hrChart', 'Heart Rate', 'rgba(255, 99, 132, 0.2)', 'rgb(255, 99, 132)');
-        var spo2Chart = createChart('spo2Chart', 'SPO2', 'rgba(75, 192, 192, 0.2)', 'rgb(75, 192, 192)');
-        var ldrChart = createChart('ldrChart', 'LDR Value', 'rgba(255, 206, 86, 0.2)', 'rgb(255, 206, 86)');
-
-        function createChart(chartId, label, backgroundColor, borderColor) {
-            var ctx = document.getElementById(chartId).getContext('2d');
-            return new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: label,
-                        data: [],
-                        borderColor: borderColor,
-                        backgroundColor: backgroundColor,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true
-                            }
-                        }]
-                    }
-                }
-            });
-        }
-
-        function fetchActuatorStatus() {
-            fetch('/actuator_status')
+            function fetchData() {
+            fetch('/data2')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('buzzer_state').innerText = data.buzzer_state ? 'On' : 'Off';
-                    // Check if LED state is "Auto" and set accordingly
-                    if (data.led_state === "Auto") {
-                        document.getElementById('led_state').innerText = 'Auto';
-                    } else {
-                        document.getElementById('led_state').innerText = data.led_state ? 'On' : 'Off';
-                    }
+                    document.getElementById('rfid').innerText = data.rfid;
+                    document.getElementById('msg').innerText = data.msg;
+                    document.getElementById('time').innerText = data.time;
                 });
         }
-
-        function acknowledgeStatus() {
-            // Send AJAX request to update all status values to 0
-            fetch('/acknowledge_status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ all: true })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        // Update the UI to reflect all status changes
-                        document.querySelectorAll('.card-text.text-danger').forEach(cardText => {
-                            cardText.innerText = 'Normal';
-                            cardText.classList.remove('text-danger');
-                            cardText.classList.add('text-success');
-                        });
-                    } else {
-                        console.error('Failed to acknowledge status:', response.statusText);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        }
-
-        function fetchStatusData() {
-            fetch('/status_data')
-                .then(response => response.json())
-                .then(data => {
-                    // Update fall status
-                    const fallStatus = data.fall == 1 ? 'Fall Detected' : 'Normal';
-                    document.querySelector('.card-body.fall .card-text').innerText = fallStatus;
-                    document.querySelector('.card-body.fall .card-text').classList.toggle('text-danger', data.fall == 1);
-                    document.querySelector('.card-body.fall .card-text').classList.toggle('text-success', data.fall == 0);
-
-                    // Update heart rate status
-                    const hrStatus = data.hr_unusual == 1 ? 'Unusual Heart Rate' : 'Normal';
-                    document.querySelector('.card-body.hr- .card-text').innerText = hrStatus;
-                    document.querySelector('.card-body.hr- .card-text').classList.toggle('text-danger', data.hr_unusual == 1);
-                    document.querySelector('.card-body.hr- .card-text').classList.toggle('text-success', data.hr_unusual == 0);
-
-                    // Update SpO2 status
-                    const spo2Status = data.spo2_unusual == 1 ? 'Unusual SpO2' : 'Normal';
-                    document.querySelector('.card-body.spo2- .card-text').innerText = spo2Status;
-                    document.querySelector('.card-body.spo2- .card-text').classList.toggle('text-danger', data.spo2_unusual == 1);
-                    document.querySelector('.card-body.spo2- .card-text').classList.toggle('text-success', data.spo2_unusual == 0);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        }
-
-        function checkStatusForAcknowledge() {
-            // Check if any of the status conditions meet the criteria for displaying the "Acknowledge" button
-            const fallStatus = document.querySelector('.card-body.fall .card-text').innerText.trim();
-            const hrStatus = document.querySelector('.card-body.hr .card-text').innerText.trim();
-            const spo2Status = document.querySelector('.card-body.spo2 .card-text').innerText.trim();
-
-            if (fallStatus === 'Fall Detected' || hrStatus === 'Unusual Heart Rate' || spo2Status === 'Unusual SpO2') {
-                document.querySelector('.ack-btn-div').style.display = 'block';
-            } else {
-                document.querySelector('.ack-btn-div').style.display = 'none';
-            }
-        }
-
-        setInterval(fetchStatusData.bind(window), 5000);
-        setInterval(checkStatusForAcknowledge, 1000);
-
-        function fetchData() {
-            fetch('/data')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('amp').innerText = data.amp;
-                    document.getElementById('heart_rate').innerText = data.heart_rate;
-                    document.getElementById('spo2').innerText = data.spo2;
-                    document.getElementById('ldr_value').innerText = data.ldr_value;
-
-                    // Update chart data
-                    updateChartData(ampData, data.amp, ampChart);
-                    updateChartData(hrData, data.heart_rate, hrChart);
-                    updateChartData(spo2Data, data.spo2, spo2Chart);
-                    updateChartData(ldrData, data.ldr_value, ldrChart);
-                });
-        }
-
-        function updateChartData(chartData, newValue, chart) {
-            chartData.push({
-                timestamp: new Date().toLocaleTimeString(),
-                value: newValue
-            });
-
-            if (chartData.length > 10) {
-                chartData.shift();
-            }
-
-            chart.data.labels = chartData.map(entry => entry.timestamp);
-            chart.data.datasets[0].data = chartData.map(entry => entry.value);
-            chart.update();
-        }
-
-        setInterval(() => {
-            const d = new Date();
-            const hr = d.getHours();
-            const min = d.getMinutes();
-            const sec = d.getSeconds();
-            const hrRotation = 30 * hr + min / 2;
-            const minRotation = 6 * min;
-            const secRotation = 6 * sec;
-
-            const hourHands = document.querySelectorAll('.hour');
-            const minuteHands = document.querySelectorAll('.minute');
-            const secondHands = document.querySelectorAll('.second');
-
-            hourHands.forEach(hand => {
-                hand.style.transform = `rotate(${hrRotation}deg)`;
-            });
-
-            minuteHands.forEach(hand => {
-                hand.style.transform = `rotate(${minRotation}deg)`;
-            });
-
-            secondHands.forEach(hand => {
-                hand.style.transform = `rotate(${secRotation}deg)`;
-            });
-        }, 1000);
-
-
-        function fetchWeather() {
-            fetch('http://api.weatherapi.com/v1/current.json?key=76113fd1052547adaa131643242105&q=Kuching&aqi=no')
-                .then(response => response.json())
-                .then(data => {
-                    const temperature = data.current.temp_c;
-                    const conditionText = data.current.condition.text;
-                    const humidity = `Humidity: ${data.current.humidity}%`;
-                    const wind = `Wind: ${data.current.wind_kph} km/h ${data.current.wind_dir}`;
-                    const weatherIcon = data.current.condition.icon;
-
-                    document.getElementById('temperature').innerText = `Temperature: ${temperature}°C`;
-                    document.getElementById('condition').innerText = `Condition: ${conditionText}`;
-                    document.getElementById('humidity').innerText = humidity;
-                    document.getElementById('wind').innerText = wind;
-                    document.getElementById('weather-icon').src = 'https:' + weatherIcon;
-                })
-                .catch(error => console.error('Error fetching weather:', error));
-        }
-
-        function updateClock() {
-            const now = new Date();
-            const hours = (now.getHours() % 12 || 12).toString().padStart(2, '0'); // Convert to 12-hour format
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const seconds = now.getSeconds().toString().padStart(2, '0');
-            const meridiem = now.getHours() >= 12 ? 'PM' : 'AM'; // Determine AM/PM
-            const digitalTime = `<span class="bold">${hours}:${minutes}:${seconds} ${meridiem}</span>`; // Wrap time in a span with bold class
-            const date = now.toLocaleDateString(); // Get the date
-
-            // Set both time and date in the same element
-            document.getElementById('digitalTime').innerHTML = digitalTime + ' ' + date;
-        }
-
-        // Update clock every second
-        setInterval(updateClock, 1000);
-
-        // Update clock every second
-        setInterval(updateClock, 1000);
-
-        // Initial fetch when the page loads
-        fetchWeather();
-
-        // Periodically update weather data (e.g., every 5 minutes)
-        setInterval(fetchWeather, 300000); // 5 minutes in milliseconds
-
-
-        // Fetch live data every 5 seconds
-        setInterval(fetchData, 5000);
-        // Fetch actuator status every 5 seconds
-        setInterval(fetchActuatorStatus, 5000);
-        // Fetch historical data and actuator status on page load
-        window.onload = function () {
-            fetchData();
-            fetchActuatorStatus();
-            fetchStatusData();
-            checkStatusForAcknowledge();
-        };
 
     </script>
 

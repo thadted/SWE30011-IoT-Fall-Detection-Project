@@ -300,7 +300,7 @@ def get_data():
     else:
         return jsonify({'error': 'No data available'})
 
-@app.route('/data')
+@app.route('/data2')
 def get_smartdoor_data():
     data = fetch_smartdoor()
     if data:
