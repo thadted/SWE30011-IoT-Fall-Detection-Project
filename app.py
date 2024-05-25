@@ -296,7 +296,7 @@ def get_movement_data():
     # Calculate the timestamp 30 minutes ago
     thirty_minutes_ago = datetime.utcnow() - timedelta(minutes=30)
     cursor.execute(
-        'SELECT amp FROM sensor_data WHERE timestamp >= %s', (thirty_minutes_ago,))
+        'SELECT amp, timestamp FROM sensor_data WHERE timestamp >= %s', (thirty_minutes_ago,))
     data = cursor.fetchall()
     db_connection.close()
     return data
@@ -323,20 +323,47 @@ def notify_user():
     db_connection.close()
 
 
+def generate_recommendations(average_amplitude):
+    if average_amplitude < 0.5:
+        return [
+            "Take a short walk every hour.",
+            "Do some stretching exercises.",
+            "Try a quick workout routine.",
+            "Engage in light physical activities like cleaning or organizing."
+        ]
+    else:
+        return [
+            "Great job! Keep up the good activity level.",
+            "Consider incorporating some strength training exercises.",
+            "Try a new fitness class or activity to keep things interesting.",
+            "Maintain regular movement breaks throughout your day."
+        ]
+
+
 @app.route('/insights')
-def activity_insights():
+def insights():
     # Get movement data from the database
     movement_data = get_movement_data()
 
     # Analyze activity level
     activity_metrics = analyze_activity(movement_data)
 
+    # Generate recommendations based on activity level
+    recommendations = generate_recommendations(
+        activity_metrics['average_amplitude'])
+
     # Check if activity level is below threshold and notify user
-    if activity_metrics['average_amplitude'] < 0.5:
+    if activity_metrics['average_amplitude'] < 1:
         notify_user()
 
-    # Render the insights template with the activity metrics
-    return render_template('insights.html', activity_metrics=activity_metrics)
+    # Format data for the graph
+    activity_data = [
+        {'timestamp': data[1].strftime('%Y-%m-%dT%H:%M:%SZ'), 'amp': data[0]}
+        for data in movement_data
+    ]
+
+    # Render the insights template with the activity metrics, activity data, and recommendations
+    return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations)
 
 
 @app.route('/get_thresholds')

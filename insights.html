@@ -62,11 +62,75 @@
     </nav>
     <div class="main-content">
         <div class="container">
+            <h1>Activity Insights</h1>
+            <div class="metrics">
+                <h2>Activity Metrics</h2>
+                <p>Average Amplitude: {{ activity_metrics.average_amplitude }}</p>
+            </div>
+            <div class="graph-container">
+                <h2>Activity Graph (Last 30 Minutes)</h2>
+                <canvas id="activityGraph"></canvas>
+            </div>
+            <div class="recommendations">
+                <h2>Recommendations</h2>
+                <ul>
+                    {% for recommendation in recommendations %}
+                    <li>{{ recommendation }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var ctx = document.getElementById('activityGraph').getContext('2d');
+            var activityData = {{ activity_data| tojson
+        }};
 
+        var timestamps = activityData.map(data => moment(data.timestamp));
+        var amplitudes = activityData.map(data => data.amp);
+
+        var chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timestamps,
+                datasets: [{
+                    label: 'Movement Rate',
+                    data: amplitudes,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'minute',
+                            displayFormats: {
+                                minute: 'HH:mm'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Movement Rate'
+                        }
+                    }
+                }
+            }
+        });
+            });
     </script>
 
 </body>
