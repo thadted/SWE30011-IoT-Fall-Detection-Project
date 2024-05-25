@@ -64,48 +64,10 @@
         <div class="container">
             <div class="info-card row">
                 <h1 class="text-center col-md-12">
-                    SmartBand Interface
+                    SmartDoor Interface
                 </h1>
                 <div class="thumbnail col-md-4">
-                    <img src="static/smartband.png" alt="smartband">
-                </div>
-                <div class="col-md-7 row">
-                    <div class="card col-md-3 status-card">
-                        <div class="card-header">
-                            Fall Status
-                        </div>
-                        <div class="card-body fall">
-                            {% if status_data.fall == 1 %}
-                            <p class="card-text text-danger">Fall Detected</p>
-                            {% else %}
-                            <p class="card-text text-success">Normal</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="card col-md-3 status-card">
-                        <div class="card-header">
-                            HR Status
-                        </div>
-                        <div class="card-body hr-">
-                            {% if status_data.hr_unusual == 1 %}
-                            <p class="card-text text-danger">Unusual Heart Rate</p>
-                            {% else %}
-                            <p class="card-text text-success">Normal</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="card col-md-3 status-card">
-                        <div class="card-header">
-                            SpO2 Status
-                        </div>
-                        <div class="card-body spo2-">
-                            {% if status_data.spo2_unusual == 1 %}
-                            <p class="card-text text-danger">Unusual SpO2</p>
-                            {% else %}
-                            <p class="card-text text-success">Normal</p>
-                            {% endif %}
-                        </div>
-                    </div>
+                    <img src="static/doorlock.png" alt="smartdoor">
                 </div>
                 <br />
                 <h2 class="text-center col-md-12" style="margin-top:20px;">Status Information</h2>
@@ -117,10 +79,10 @@
                             </div>
                             <div class="card-body top-card">
                                 <h5 class="card-title text-primary">Current Data</h5>
-                                <p class="card-text">Amplitude: <span id="amp"></span></p>
-                                <p class="card-text">Heart Rate: <span id="heart_rate"></span></p>
-                                <p class="card-text">SPO2: <span id="spo2"></span></p>
-                                <p class="card-text">Surronding Light Value: <span id="ldr_value"></span></p>
+                                <br>
+                                <p class="card-text">RFID: <span id="rfid"></span></p>
+                                <p class="card-text">Message: <span id="msg"></span></p>
+                                <p class="card-text">Time: <span id="time"></span></p>
                             </div>
                         </div>
                     </div>
@@ -131,8 +93,9 @@
                             </div>
                             <div class="card-body top-card">
                                 <h5 class="card-title text-primary">Actuator Status</h5>
-                                <p class="card-text">Buzzer State: <span id="buzzer_state"></span></p>
-                                <p class="card-text">LED State: <span id="led_state"></span></p>
+                                <br>
+                                <p class="card-text">Door State: <span id="door_status"></span></p>
+                                <p class="card-text">LED State: <span id="led_status"></span></p>
                             </div>
                         </div>
                     </div>

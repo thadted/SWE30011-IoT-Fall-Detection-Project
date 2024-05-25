@@ -40,6 +40,15 @@ def fetch_status():
     db_connection.close()
     return status_data
 
+def fetch_smartdoor():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM status WHERE id = 1")
+    status_data = cursor.fetchone()
+    cursor.close()
+    db_connection.close()
+    return status_data
+
 # # Function to fetch threshold settings from the database
 
 
@@ -167,6 +176,11 @@ def index():
 def smartband():
     status_data = fetch_status()
     return render_template('smartband.html', status_data=status_data)
+
+@app.route('/smartdoor')
+def smartdoor():
+    status_data = fetch_smartdoor()
+    return render_template('smartdoor.html', status_data=status_data)
 
 
 @app.route('/home')
