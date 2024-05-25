@@ -6,7 +6,7 @@ from pytz import timezone, utc
 from threading import Thread, Event
 import time
 import pytz
-app = Flask(__name__)
+app = Flask(_name_)
 
 # Function to establish database connection
 
@@ -40,10 +40,11 @@ def fetch_status():
     db_connection.close()
     return status_data
 
+
 def fetch_smartdoor():
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM status WHERE id = 1")
+    cursor.execute("SELECT * FROM access_logs WHERE id = 1")
     status_data = cursor.fetchone()
     cursor.close()
     db_connection.close()
@@ -177,6 +178,7 @@ def smartband():
     status_data = fetch_status()
     return render_template('smartband.html', status_data=status_data)
 
+
 @app.route('/smartdoor')
 def smartdoor():
     status_data = fetch_smartdoor()
@@ -195,10 +197,10 @@ def fetch_notifications(filter_option):
 
     if filter_option == 'unread':
         cursor.execute(
-            "SELECT * FROM notifications WHERE `read` = FALSE ORDER BY timestamp DESC")
+            "SELECT * FROM notifications WHERE read = FALSE ORDER BY timestamp DESC")
     elif filter_option == 'read':
         cursor.execute(
-            "SELECT * FROM notifications WHERE `read` = TRUE ORDER BY timestamp DESC")
+            "SELECT * FROM notifications WHERE read = TRUE ORDER BY timestamp DESC")
     else:
         cursor.execute("SELECT * FROM notifications ORDER BY timestamp DESC")
 
@@ -241,7 +243,7 @@ def mark_read(notification_id):
         cursor.execute("UPDATE status SET version = version + 1 WHERE id = 1")
         # Mark the notification as read
         cursor.execute(
-            "UPDATE notifications SET `read` = TRUE WHERE id = %s", (notification_id,))
+            "UPDATE notifications SET read = TRUE WHERE id = %s", (notification_id,))
 
         db_connection.commit()
         cursor.close()
@@ -295,6 +297,15 @@ def get_data():
     if data:
         amp, heart_rate, spo2, ldr_value = data[1], data[2], data[3], data[4]
         return jsonify({'amp': amp, 'heart_rate': heart_rate, 'spo2': spo2, 'ldr_value': ldr_value})
+    else:
+        return jsonify({'error': 'No data available'})
+
+@app.route('/data')
+def get_smartdoor_data():
+    data = fetch_smartdoor()
+    if data:
+        rfid, msg, time = data[1], data[2], data[3]
+        return jsonify({'rfid': rfid, 'msg': msg, 'time': time})
     else:
         return jsonify({'error': 'No data available'})
 
@@ -370,9 +381,12 @@ def insights():
     if activity_metrics['average_amplitude'] < 1:
         notify_user()
 
+    local_timezone = pytz.timezone('Asia/Singapore')
+
     # Format data for the graph
     activity_data = [
-        {'timestamp': data[1].strftime('%Y-%m-%dT%H:%M:%SZ'), 'amp': data[0]}
+        {'timestamp': data[1].strftime(
+            '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc).astimezone(local_timezone), 'amp': data[0]}
         for data in movement_data
     ]
 
@@ -464,7 +478,7 @@ def fetch_data_by_timestamp(timestamp):
     return data
 
 
-if __name__ == '__main__':
+if _name_ == '_main_':
     stop_event = Event()
     monitor_thread = Thread(target=detect_and_notify_changes)
     monitor_thread.start()
