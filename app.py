@@ -6,7 +6,7 @@ from pytz import timezone, utc
 from threading import Thread, Event
 import time
 import pytz
-app = Flask(_name_)
+app = Flask(__name__)
 
 # Function to establish database connection
 
@@ -386,7 +386,7 @@ def insights():
     # Format data for the graph
     activity_data = [
         {'timestamp': data[1].strftime(
-            '%Y-%m-%d %H:%M:%S').replace(tzinfo=pytz.utc).astimezone(local_timezone), 'amp': data[0]}
+            '%Y-%m-%d %H:%M:%S'), 'amp': data[0]}
         for data in movement_data
     ]
 
@@ -478,7 +478,7 @@ def fetch_data_by_timestamp(timestamp):
     return data
 
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     stop_event = Event()
     monitor_thread = Thread(target=detect_and_notify_changes)
     monitor_thread.start()
