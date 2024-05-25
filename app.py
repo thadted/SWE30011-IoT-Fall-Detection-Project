@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 import mysql.connector
 from flask import request
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone, utc
 from threading import Thread, Event
 import time
@@ -288,6 +288,55 @@ def get_data():
 @app.route('/settings')
 def settings():
     return render_template('settings.html')
+
+
+def get_movement_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    # Calculate the timestamp 30 minutes ago
+    thirty_minutes_ago = datetime.utcnow() - timedelta(minutes=30)
+    cursor.execute(
+        'SELECT amp FROM sensor_data WHERE timestamp >= %s', (thirty_minutes_ago,))
+    data = cursor.fetchall()
+    db_connection.close()
+    return data
+
+# Function to analyze activity level
+
+
+def analyze_activity(movement_data):
+    if not movement_data:
+        return {'average_amplitude': 0}
+    total_amplitude = sum(data[0] for data in movement_data)
+    average_amplitude = total_amplitude / len(movement_data)
+    return {'average_amplitude': average_amplitude}
+
+# Function to notify user by turning on the buzzer
+
+
+def notify_user():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    # Update the buzzer_activation value to True in the settings table
+    cursor.execute("UPDATE settings SET buzzer_activation = 2")
+    db_connection.commit()
+    db_connection.close()
+
+
+@app.route('/insights')
+def activity_insights():
+    # Get movement data from the database
+    movement_data = get_movement_data()
+
+    # Analyze activity level
+    activity_metrics = analyze_activity(movement_data)
+
+    # Check if activity level is below threshold and notify user
+    if activity_metrics['average_amplitude'] < 0.5:
+        notify_user()
+
+    # Render the insights template with the activity metrics
+    return render_template('insights.html', activity_metrics=activity_metrics)
 
 
 @app.route('/get_thresholds')
