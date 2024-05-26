@@ -197,10 +197,10 @@ def fetch_notifications(filter_option):
 
     if filter_option == 'unread':
         cursor.execute(
-            "SELECT * FROM notifications WHERE read = FALSE ORDER BY timestamp DESC")
+            "SELECT * FROM notifications WHERE `read` = FALSE ORDER BY timestamp DESC")
     elif filter_option == 'read':
         cursor.execute(
-            "SELECT * FROM notifications WHERE read = TRUE ORDER BY timestamp DESC")
+            "SELECT * FROM notifications WHERE `read` = TRUE ORDER BY timestamp DESC")
     else:
         cursor.execute("SELECT * FROM notifications ORDER BY timestamp DESC")
 
@@ -243,7 +243,7 @@ def mark_read(notification_id):
         cursor.execute("UPDATE status SET version = version + 1 WHERE id = 1")
         # Mark the notification as read
         cursor.execute(
-            "UPDATE notifications SET read = TRUE WHERE id = %s", (notification_id,))
+            "UPDATE notifications SET `read` = TRUE WHERE id = %s", (notification_id,))
 
         db_connection.commit()
         cursor.close()
@@ -300,6 +300,7 @@ def get_data():
     else:
         return jsonify({'error': 'No data available'})
 
+
 @app.route('/data2')
 def get_smartdoor_data():
     data = fetch_smartdoor()
@@ -318,8 +319,11 @@ def settings():
 def get_movement_data():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
+    local_timezone = pytz.timezone('Asia/Singapore')
     # Calculate the timestamp 30 minutes ago
-    thirty_minutes_ago = datetime.utcnow() - timedelta(minutes=30)
+    utc_time = datetime.utcnow()
+    utc_time.replace(tzinfo=pytz.utc).astimezone(local_timezone)
+    thirty_minutes_ago = utc_time - timedelta(minutes=30)
     cursor.execute(
         'SELECT amp, timestamp FROM sensor_data WHERE timestamp >= %s', (thirty_minutes_ago,))
     data = cursor.fetchall()
@@ -343,13 +347,13 @@ def notify_user():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
     # Update the buzzer_activation value to True in the settings table
-    cursor.execute("UPDATE settings SET buzzer_activation = 2")
+    cursor.execute("UPDATE settings SET notifty = 1")
     db_connection.commit()
     db_connection.close()
 
 
 def generate_recommendations(average_amplitude):
-    if average_amplitude < 0.5:
+    if average_amplitude < 1:
         return [
             "Take a short walk every hour.",
             "Do some stretching exercises.",
