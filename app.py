@@ -347,7 +347,14 @@ def notify_user():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
     # Update the buzzer_activation value to True in the settings table
-    cursor.execute("UPDATE settings SET notifty = 1")
+    cursor.execute("UPDATE settings SET buzzer_activation = 2")
+    cursor.execute(
+        "SELECT version FROM settings ORDER BY version DESC LIMIT 1")
+    current_version = cursor.fetchone()[0]
+    new_version = current_version + 1
+
+    # Update the version number
+    cursor.execute("UPDATE settings SET version = %s", (new_version,))
     db_connection.commit()
     db_connection.close()
 
