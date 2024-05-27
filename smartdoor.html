@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartHome Dashboard</title>
+    <title>SmartBand Dashboard</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="static/main.css" rel="stylesheet">
 </head>
 
@@ -61,55 +62,69 @@
     </nav>
     <div class="main-content">
         <div class="container">
-            <h1 class="text-center">Notifications</h1>
-            <div class="text-center">
-                <a href="/notifications?filter=unread" class="btn btn-primary">Unread</a>
-                <a href="/notifications?filter=read" class="btn btn-secondary btn-read">Read</a>
-                <a href="/notifications" class="btn btn-info">All</a>
+            <div class="info-card row">
+                <h1 class="text-center col-md-12">
+                    SmartDoor Interface
+                </h1>
+                <div class="thumbnail col-md-4">
+                    <img src="static/doorlock.png" alt="smartdoor">
+                </div>
+                <br />
+                <h2 class="text-center col-md-12" style="margin-top:20px;">Status Information</h2>
+                <div class="row col-md-12">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Live Data
+                            </div>
+                            <div class="card-body top-card">
+                                <h5 class="card-title text-primary">Current Data</h5>
+                                <br>
+                                <p class="card-text">RFID: <span id="rfid"></span></p>
+                                <p class="card-text">Message: <span id="msg"></span></p>
+                                <p class="card-text">Time: <span id="time"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Live Data
+                            </div>
+                            <div class="card-body top-card">
+                                <h5 class="card-title text-primary">Actuator Status</h5>
+                                <br>
+                                <p class="card-text">Door State: <span id="door_status"></span></p>
+                                <p class="card-text">LED State: <span id="led_status"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <br />
+                <br />
+                <br />
+
+                <br />
+                <br />
+                <br />
+                <br />
             </div>
-            <br />
-            <ul class="list-group">
-                {% for notification in notifications %}
-                <li
-                    class="list-group-item {{ 'list-group-item-warning' if not notification.read else 'list-group-item-info' }}">
-                    <strong>{{ notification.type.replace('_', ' ').title() }}</strong>: {{ notification.message }}
-                    <br>
-                    {% if not notification.read %}
-                    <button class="btn btn-sm btn-success float-right mark-read" data-id="{{ notification.id }}">Mark as
-                        Read</button>
-                    {% endif %}
-                    {% if filter_option == 'read' %}
-                    <button class="btn btn-sm btn-danger float-right delete-notification mr-2"
-                        data-id="{{ notification.id }}">Delete</button>
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
         </div>
     </div>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script>
-        $(document).ready(function () {
-            $('.mark-read').on('click', function () {
-                var id = $(this).data('id');
-                $.post('/mark_read/' + id, function (response) {
-                    if (response.status === 'success') {
-                        location.reload();
-                    }
+        function fetchData() {
+            fetch('/data2')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('rfid').innerText = data.rfid;
+                    document.getElementById('msg').innerText = data.msg;
+                    document.getElementById('time').innerText = data.time;
                 });
-            });
-
-            $('.delete-notification').on('click', function () {
-                var id = $(this).data('id');
-                $.post('/delete_notification/' + id, function (response) {
-                    if (response.status === 'success') {
-                        location.reload();
-                    }
-                });
-            });
-        });
+        }
+        fetchData()
     </script>
-
 
 </body>
 

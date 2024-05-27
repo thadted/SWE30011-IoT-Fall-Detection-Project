@@ -1,11 +1,12 @@
 from flask import Flask, render_template, jsonify, request
 import mysql.connector
 from flask import request
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone, utc
 from threading import Thread, Event
 import time
 import pytz
+import threading
 app = Flask(__name__)
 
 # Function to establish database connection
@@ -35,6 +36,16 @@ def fetch_status():
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)
     cursor.execute("SELECT * FROM status WHERE id = 1")
+    status_data = cursor.fetchone()
+    cursor.close()
+    db_connection.close()
+    return status_data
+
+
+def fetch_smartdoor():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM access_logs WHERE id = 1")
     status_data = cursor.fetchone()
     cursor.close()
     db_connection.close()
@@ -169,6 +180,12 @@ def smartband():
     return render_template('smartband.html', status_data=status_data)
 
 
+@app.route('/smartdoor')
+def smartdoor():
+    status_data = fetch_smartdoor()
+    return render_template('smartdoor.html', status_data=status_data)
+
+
 @app.route('/home')
 def home():
     status_data = fetch_status()
@@ -285,15 +302,156 @@ def get_data():
         return jsonify({'error': 'No data available'})
 
 
+@app.route('/data2')
+def get_smartdoor_data():
+    data = fetch_smartdoor()
+    if data:
+        rfid, msg, time = data[1], data[2], data[3]
+        return jsonify({'rfid': rfid, 'msg': msg, 'time': time})
+    else:
+        return jsonify({'error': 'No data available'})
+
+
 @app.route('/settings')
 def settings():
     return render_template('settings.html')
+
+
+def get_movement_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    local_timezone = pytz.timezone('Asia/Singapore')
+    # Calculate the timestamp 30 minutes ago
+    utc_time = datetime.utcnow()
+    utc_time.replace(tzinfo=pytz.utc).astimezone(local_timezone)
+    thirty_minutes_ago = utc_time - timedelta(minutes=30)
+    cursor.execute(
+        'SELECT amp, timestamp FROM sensor_data WHERE timestamp >= %s', (thirty_minutes_ago,))
+    data = cursor.fetchall()
+    db_connection.close()
+    return data
+
+# Function to analyze activity level
+
+
+def analyze_activity(movement_data):
+    if not movement_data:
+        return {'average_amplitude': 0, 'movement_detected': False}
+
+    # Calculate the differences between consecutive amplitude values
+    amplitude_changes = [abs(movement_data[i][0] - movement_data[i - 1][0])
+                         for i in range(1, len(movement_data))]
+
+    # Calculate the average change in amplitude
+    average_change = sum(amplitude_changes) / \
+        len(amplitude_changes) if amplitude_changes else 0
+
+    # Define a threshold for detecting movement
+    movement_threshold = 2  # You can adjust this value based on your sensor's sensitivity
+
+    # Determine if movement is detected
+    movement_detected = average_change > movement_threshold
+
+    return {
+        'average_amplitude': average_change,
+        'movement_detected': movement_detected
+    }
+
+
+def turn_off_buzzer():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    cursor.execute("UPDATE settings SET movement = 0")
+    db_connection.commit()
+
+    cursor.execute(
+        "SELECT version FROM settings ORDER BY version DESC LIMIT 1")
+    current_version = cursor.fetchone()[0]
+    new_version = current_version + 1
+
+    # Update the version number
+    cursor.execute("UPDATE settings SET version = %s", (new_version,))
+    db_connection.commit()
+    db_connection.close()
+
+# Function to notify user by turning on the buzzer
+
+
+def notify_user():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    cursor.execute("UPDATE settings SET movement = 1")
+
+    cursor.execute(
+        "SELECT version FROM settings ORDER BY version DESC LIMIT 1")
+    current_version = cursor.fetchone()[0]
+    new_version = current_version + 1
+
+    cursor.execute("UPDATE settings SET version = %s", (new_version,))
+    db_connection.commit()
+    db_connection.close()
+
+    threading.Timer(20, turn_off_buzzer).start()
+
+
+def check_movement():
+    movement_data = get_movement_data()
+    activity_metrics = analyze_activity(movement_data)
+
+    if activity_metrics['average_amplitude'] < 1:
+        notify_user()
+
+    # Schedule the next check after 30 minutes
+    # threading.Timer(30 * 60, check_movement).start()
+
+
+def generate_recommendations(average_amplitude):
+    if average_amplitude < 1:
+        return [
+            "Take a short walk every hour.",
+            "Do some stretching exercises.",
+            "Try a quick workout routine.",
+            "Engage in light physical activities like cleaning or organizing."
+        ]
+    else:
+        return [
+            "Great job! Keep up the good activity level.",
+            "Consider incorporating some strength training exercises.",
+            "Try a new fitness class or activity to keep things interesting.",
+            "Maintain regular movement breaks throughout your day."
+        ]
+
+
+@app.route('/insights')
+def insights():
+    # Get movement data from the database
+    movement_data = get_movement_data()
+
+    # Analyze activity level
+    activity_metrics = analyze_activity(movement_data)
+
+    # Generate recommendations based on activity level
+    recommendations = generate_recommendations(
+        activity_metrics['average_amplitude'])
+
+    # Format data for the graph
+    activity_data = [
+        {'timestamp': data[1].strftime(
+            '%Y-%m-%d %H:%M:%S'), 'amp': data[0]}
+        for data in movement_data
+    ]
+
+    # Render the insights template with the activity metrics, activity data, and recommendations
+    return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations)
 
 
 @app.route('/get_thresholds')
 def get_thresholds():
     thresholds = fetch_thresholds()
     return jsonify(thresholds)
+
+
+check_movement()
 
 
 @app.route('/save_threshold', methods=['POST'])

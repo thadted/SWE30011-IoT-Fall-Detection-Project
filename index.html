@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartBand Dashboard</title>
+    <title>SmartHome Dashboard</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="main.css" rel="stylesheet">
@@ -41,6 +41,14 @@
                         d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901" />
                 </svg>
                 <a href="{{ url_for('notifications') }}" class="nav-link btn my-2">Notification</a>
+            </li>
+            <li class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-graph-up" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd"
+                        d="M0 0h1v15h15v1H0zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07" />
+                </svg>
+                <a href="{{ url_for('insights') }}" class="nav-link btn my-2">Insights</a>
             </li>
             <li class="nav-item">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -109,14 +117,15 @@
                                                 d="M1.475 9C2.702 10.84 4.779 12.871 8 15c3.221-2.129 5.298-4.16 6.525-6H12a.5.5 0 0 1-.464-.314l-1.457-3.642-1.598 5.593a.5.5 0 0 1-.945.049L5.889 6.568l-1.473 2.21A.5.5 0 0 1 4 9z" />
                                             <path
                                                 d="M.88 8C-2.427 1.68 4.41-2 7.823 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C11.59-2 18.426 1.68 15.12 8h-2.783l-1.874-4.686a.5.5 0 0 0-.945.049L7.921 8.956 6.464 5.314a.5.5 0 0 0-.88-.091L3.732 8z" />
-                                        </svg> 90 Bpm</li>
+                                        </svg> <span id="heart_rate"></span>
+                                    </li>
                                     <li class="item"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                             fill="currentColor" class="bi bi-0-circle-fill" viewBox="0 0 16 16">
                                             <path
                                                 d="M8 4.951c-1.008 0-1.629 1.09-1.629 2.895v.31c0 1.81.627 2.895 1.629 2.895s1.623-1.09 1.623-2.895v-.31c0-1.8-.621-2.895-1.623-2.895" />
                                             <path
                                                 d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-8.012 4.158c1.858 0 2.96-1.582 2.96-3.99V7.84c0-2.426-1.079-3.996-2.936-3.996-1.864 0-2.965 1.588-2.965 3.996v.328c0 2.42 1.09 3.99 2.941 3.99" />
-                                        </svg> 90%</li>
+                                        </svg> <span id="spo2"></span></li>
                                     <li class="item"> <button class="btn btn-secondary"> <a
                                                 href="{{ url_for('smartband') }}">
                                                 Details</a></button></li>
@@ -139,25 +148,27 @@
                                 <a href="{{ url_for('environment') }}">Details</a>
                             </button>
                         </div>
+                        <br>
+                        <br>
+                        <br>
                     </div>
                 </div>
-                
 
+                <div class="col-md-4">
+                    <div class="card node-card">
+                        <h2>Smart Door</h2>
+                        <div class="row">
 
-
-            </div>
-            <div class="col-md-4">
-                <div class="card node-card">
-                    <h2>SmartDoor</h2>
-                    <div class="row">
-
-                        <div class="thumbnail col-md-6">
-                            <img src="static/smartband.png" alt="smartband">
-                        </div>
-                        <div class="col-md-4">
-                            <p>Battery: 10%</p>
-                            <p>Heart Rate: 90</p>
-                            <p>SpO2 Level: 90</p>
+                            <div class="thumbnail col-md-6">
+                                <img src="static/doorlock.png" alt="doorlock">
+                            </div>
+                            <div class="col-md-4">
+                                <ul class="list-group">
+                                    <li class="item"> <button class="btn btn-secondary"> <a
+                                                href="{{ url_for('smartdoor') }}">
+                                                Details</a></button></li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -172,16 +183,8 @@
             fetch('/data')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('amp').innerText = data.amp;
                     document.getElementById('heart_rate').innerText = data.heart_rate;
                     document.getElementById('spo2').innerText = data.spo2;
-                    document.getElementById('ldr_value').innerText = data.ldr_value;
-
-                    // Update chart data
-                    updateChartData(ampData, data.amp, ampChart);
-                    updateChartData(hrData, data.heart_rate, hrChart);
-                    updateChartData(spo2Data, data.spo2, spo2Chart);
-                    updateChartData(ldrData, data.ldr_value, ldrChart);
                 });
         }
 
@@ -259,14 +262,9 @@
 
         // Fetch live data every 5 seconds
         setInterval(fetchData, 5000);
-        // Fetch actuator status every 5 seconds
-        setInterval(fetchActuatorStatus, 5000);
         // Fetch historical data and actuator status on page load
         window.onload = function () {
             fetchData();
-            fetchActuatorStatus();
-            fetchStatusData();
-            checkStatusForAcknowledge();
         };
 
     </script>
