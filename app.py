@@ -51,6 +51,36 @@ def fetch_smartdoor():
     db_connection.close()
     return status_data
 
+# Function to fetch data from the temperature_data table
+@app.route('/temperature_data')
+def fetch_temperature_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    cursor.execute('SELECT * FROM temperature_data ORDER BY timestamp DESC LIMIT 1')
+    data = cursor.fetchone()
+    db_connection.close()
+    return data
+
+# Function to fetch data from the gas_data table
+@app.route('/gas_data')
+def fetch_gas_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    cursor.execute('SELECT * FROM gas_data ORDER BY timestamp DESC LIMIT 1')
+    data = cursor.fetchone()
+    db_connection.close()
+    return data
+
+# Function to fetch data from the location_data table
+@app.route('/location_data')
+def fetch_location_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    cursor.execute('SELECT * FROM location_data ORDER BY timestamp DESC LIMIT 1')
+    data = cursor.fetchone()
+    db_connection.close()
+    return data
+
 # # Function to fetch threshold settings from the database
 
 
@@ -536,33 +566,6 @@ def fetch_data_by_timestamp(timestamp):
     cursor.execute(
         'SELECT * FROM sensor_data WHERE timestamp = %s', (timestamp,))
     data = cursor.fetchall()
-    db_connection.close()
-    return data
-
-# Function to fetch data from the temperature_data table
-def fetch_temperature_data():
-    db_connection = connect_to_database()
-    cursor = db_connection.cursor()
-    cursor.execute('SELECT * FROM temperature_data ORDER BY timestamp DESC LIMIT 1')
-    data = cursor.fetchone()
-    db_connection.close()
-    return data
-
-# Function to fetch data from the gas_data table
-def fetch_gas_data():
-    db_connection = connect_to_database()
-    cursor = db_connection.cursor()
-    cursor.execute('SELECT * FROM gas_data ORDER BY timestamp DESC LIMIT 1')
-    data = cursor.fetchone()
-    db_connection.close()
-    return data
-
-# Function to fetch data from the location_data table
-def fetch_location_data():
-    db_connection = connect_to_database()
-    cursor = db_connection.cursor()
-    cursor.execute('SELECT * FROM location_data ORDER BY timestamp DESC LIMIT 1')
-    data = cursor.fetchone()
     db_connection.close()
     return data
 
