@@ -391,7 +391,7 @@ def notify_user():
     db_connection.commit()
     db_connection.close()
 
-    threading.Timer(20, turn_off_buzzer).start()
+    threading.Timer(5, turn_off_buzzer).start()
 
 
 def check_movement():
@@ -402,7 +402,7 @@ def check_movement():
         notify_user()
 
     # Schedule the next check after 30 minutes
-    # threading.Timer(30 * 60, check_movement).start()
+    threading.Timer(30 * 60, check_movement).start()
 
 
 def generate_recommendations(average_amplitude):
