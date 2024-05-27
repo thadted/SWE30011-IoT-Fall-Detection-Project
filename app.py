@@ -52,16 +52,21 @@ def fetch_smartdoor():
     return status_data
 
 # Function to fetch data from the temperature_data table
+
+
 @app.route('/temperature_data')
 def fetch_temperature_data():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
-    cursor.execute('SELECT * FROM temperature_data ORDER BY timestamp DESC LIMIT 1')
+    cursor.execute(
+        'SELECT * FROM temperature_data ORDER BY timestamp DESC LIMIT 1')
     data = cursor.fetchone()
     db_connection.close()
     return data
 
 # Function to fetch data from the gas_data table
+
+
 @app.route('/gas_data')
 def fetch_gas_data():
     db_connection = connect_to_database()
@@ -72,11 +77,14 @@ def fetch_gas_data():
     return data
 
 # Function to fetch data from the location_data table
+
+
 @app.route('/location_data')
 def fetch_location_data():
     db_connection = connect_to_database()
-    cursor = db_connection.cursor()
-    cursor.execute('SELECT * FROM location_data ORDER BY timestamp DESC LIMIT 1')
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute(
+        'SELECT * FROM location_data ORDER BY timestamp DESC LIMIT 1')
     data = cursor.fetchone()
     db_connection.close()
     return data
@@ -551,13 +559,13 @@ def sensor_data():
     db_connection.close()
     return jsonify(sensor_data)
 
+
 @app.route('/environment')
 def environment():
     temperature_data = fetch_temperature_data()
     gas_data = fetch_gas_data()
     location_data = fetch_location_data()
     return render_template('environment.html', temperature_data=temperature_data, gas_data=gas_data, location_data=location_data)
-
 
 
 def fetch_data_by_timestamp(timestamp):
@@ -568,6 +576,7 @@ def fetch_data_by_timestamp(timestamp):
     data = cursor.fetchall()
     db_connection.close()
     return data
+
 
 if __name__ == '__main__':
     stop_event = Event()
