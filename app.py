@@ -357,7 +357,6 @@ def turn_off_buzzer():
     cursor.execute("UPDATE settings SET version = %s", (new_version,))
     db_connection.commit()
     db_connection.close()
-    db_connection.close()
 
 # Function to notify user by turning on the buzzer
 
@@ -367,6 +366,7 @@ def notify_user():
     cursor = db_connection.cursor()
     # Update the movement value to 1 in the settings table
     cursor.execute("UPDATE settings SET movement = 1")
+    db_connection.commit()
     cursor.execute(
         "SELECT version FROM settings ORDER BY version DESC LIMIT 1")
     current_version = cursor.fetchone()[0]
