@@ -172,8 +172,8 @@ while True:
 
     # Fetch threshold values from the database
     settings = fetch_thresholds()
-    low_hr, low_spo2, fallThreshold, fallCheckDuration, fallChangeThreshold, high_spo2, spo2_unusual_time, high_hr, hr_unusual_time, low_ldr, buzzer_state_database, led_state_database = settings[
-        1], settings[2], settings[3], settings[4], settings[5], settings[6], settings[7], settings[8], settings[9], settings[10], settings[11], settings[12]
+    low_hr, low_spo2, fallThreshold, fallCheckDuration, fallChangeThreshold, high_spo2, spo2_unusual_time, high_hr, hr_unusual_time, low_ldr, buzzer_state_database, led_state_database, movement_state = settings[
+        1], settings[2], settings[3], settings[4], settings[5], settings[6], settings[7], settings[8], settings[9], settings[10], settings[11], settings[12], settings[13]
 
     try:
         # Read data from serial port
@@ -193,6 +193,11 @@ while True:
             ser.write(b'Dark\n')
         else:
             ser.write(b'Bright\n')
+
+        if movement_state == 1:
+            ser.write(b'Notify\n')
+        else:
+            ser.write(b'StopNotify|n')
 
         # Process sensor data received from Arduino
         if data.startswith("Amp="):

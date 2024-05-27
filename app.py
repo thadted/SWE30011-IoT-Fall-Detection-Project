@@ -6,6 +6,7 @@ from pytz import timezone, utc
 from threading import Thread, Event
 import time
 import pytz
+import threading
 app = Flask(__name__)
 
 # Function to establish database connection
@@ -340,14 +341,13 @@ def analyze_activity(movement_data):
     average_amplitude = total_amplitude / len(movement_data)
     return {'average_amplitude': average_amplitude}
 
-# Function to notify user by turning on the buzzer
 
-
-def notify_user():
+def turn_off_buzzer():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
-    # Update the buzzer_activation value to True in the settings table
-    cursor.execute("UPDATE settings SET buzzer_activation = 2")
+    cursor.execute("UPDATE settings SET movement = 0")
+    db_connection.commit()
+
     cursor.execute(
         "SELECT version FROM settings ORDER BY version DESC LIMIT 1")
     current_version = cursor.fetchone()[0]
@@ -357,6 +357,39 @@ def notify_user():
     cursor.execute("UPDATE settings SET version = %s", (new_version,))
     db_connection.commit()
     db_connection.close()
+    db_connection.close()
+
+# Function to notify user by turning on the buzzer
+
+
+def notify_user():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    # Update the movement value to 1 in the settings table
+    cursor.execute("UPDATE settings SET movement = 1")
+    cursor.execute(
+        "SELECT version FROM settings ORDER BY version DESC LIMIT 1")
+    current_version = cursor.fetchone()[0]
+    new_version = current_version + 1
+
+    # Update the version number
+    cursor.execute("UPDATE settings SET version = %s", (new_version,))
+    db_connection.commit()
+    db_connection.close()
+
+    # Schedule to turn off the buzzer after 20 seconds
+    threading.Timer(60, turn_off_buzzer).start()
+
+
+def check_movement():
+    movement_data = get_movement_data()
+    activity_metrics = analyze_activity(movement_data)
+
+    if activity_metrics['average_amplitude'] < 1:
+        notify_user()
+
+    # Schedule the next check after 30 minutes
+    threading.Timer(30 * 60, check_movement).start()
 
 
 def generate_recommendations(average_amplitude):
@@ -388,12 +421,6 @@ def insights():
     recommendations = generate_recommendations(
         activity_metrics['average_amplitude'])
 
-    # Check if activity level is below threshold and notify user
-    if activity_metrics['average_amplitude'] < 1:
-        notify_user()
-
-    local_timezone = pytz.timezone('Asia/Singapore')
-
     # Format data for the graph
     activity_data = [
         {'timestamp': data[1].strftime(
@@ -409,6 +436,9 @@ def insights():
 def get_thresholds():
     thresholds = fetch_thresholds()
     return jsonify(thresholds)
+
+
+check_movement()
 
 
 @app.route('/save_threshold', methods=['POST'])
