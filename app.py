@@ -42,12 +42,20 @@ def fetch_status():
     return status_data
 
 
-def fetch_smartdoor():
+def fetch_smartdoor_data():
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM access_logs WHERE id = 1")
+    cursor.execute("SELECT * FROM access_logs ORDER BY timestamp DESC LIMIT 1")
     status_data = cursor.fetchone()
-    cursor.close()
+    db_connection.close()
+    return status_data
+
+
+def fetch_smartdoor_status():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM status_logs ORDER BY timestamp DESC LIMIT 1")
+    status_data = cursor.fetchone()
     db_connection.close()
     return status_data
 
@@ -182,7 +190,7 @@ def smartband():
 
 @app.route('/smartdoor')
 def smartdoor():
-    status_data = fetch_smartdoor()
+    status_data = fetch_smartdoor_data()
     return render_template('smartdoor.html', status_data=status_data)
 
 
@@ -302,12 +310,25 @@ def get_data():
         return jsonify({'error': 'No data available'})
 
 
-@app.route('/data2')
+@app.route('/smartdoor_data')
 def get_smartdoor_data():
-    data = fetch_smartdoor()
+    data = fetch_smartdoor_data()
     if data:
-        rfid, msg, time = data[1], data[2], data[3]
-        return jsonify({'rfid': rfid, 'msg': msg, 'time': time})
+        rfid = data.get('rfid')
+        message = data.get('message')
+        return jsonify({'rfid': rfid, 'message': message})
+    else:
+        return jsonify({'error': 'No data available'})
+
+
+@app.route('/smartdoor_status')
+def get_smartdoor_status():
+    data = fetch_smartdoor_status()
+    if data:
+        door_status = data.get('door_status')
+        led_status = data.get('led_status')
+        timestamp = data.get('timestamp')
+        return jsonify({'door_status': door_status, 'led_status': led_status, 'timestamp': timestamp})
     else:
         return jsonify({'error': 'No data available'})
 
