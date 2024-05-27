@@ -65,7 +65,8 @@
             <h1>Activity Insights</h1>
             <div class="metrics">
                 <h2>Activity Metrics</h2>
-                <p>Average Amplitude: {{ activity_metrics.average_amplitude }}</p>
+                <p>Average Motion: {{ activity_metrics['average_amplitude'] }}</p>
+                <p>Movement Detected: {{ activity_metrics['movement_detected'] }}</p>
             </div>
             <div class="graph-container">
                 <h2>Activity Graph (Last 30 Minutes)</h2>

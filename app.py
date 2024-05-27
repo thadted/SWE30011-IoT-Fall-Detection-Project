@@ -319,17 +319,32 @@ def settings():
 
 def get_movement_data():
     db_connection = connect_to_database()
-    cursor = db_connection.cursor()
+    cursor = db_connection.cursor(dictionary=True)
+
+    # Define the local timezone
     local_timezone = pytz.timezone('Asia/Singapore')
-    # Calculate the timestamp 30 minutes ago
-    utc_time = datetime.utcnow()
-    utc_time.replace(tzinfo=pytz.utc).astimezone(local_timezone)
-    thirty_minutes_ago = utc_time - timedelta(minutes=30)
+
+    # Get the current UTC time and convert it to the local time
+    utc_time = datetime.utcnow().replace(tzinfo=pytz.utc)
+    local_time = utc_time.astimezone(local_timezone)
+
+    # Calculate the timestamp 30 minutes ago in local time
+    thirty_minutes_ago_local = local_time - timedelta(minutes=30)
+
+    # Convert 30 minutes ago local time back to UTC for the database query
+    thirty_minutes_ago_utc = thirty_minutes_ago_local.astimezone(pytz.utc)
+
+    # Query the database for data in the last 30 minutes
     cursor.execute(
-        'SELECT amp, timestamp FROM sensor_data WHERE timestamp >= %s', (thirty_minutes_ago,))
+        'SELECT amp, timestamp FROM sensor_data WHERE timestamp >= %s',
+        (thirty_minutes_ago_utc,)
+    )
     data = cursor.fetchall()
+
     db_connection.close()
     return data
+
+
 
 # Function to analyze activity level
 
@@ -339,15 +354,17 @@ def analyze_activity(movement_data):
         return {'average_amplitude': 0, 'movement_detected': False}
 
     # Calculate the differences between consecutive amplitude values
-    amplitude_changes = [abs(movement_data[i][0] - movement_data[i - 1][0])
-                         for i in range(1, len(movement_data))]
+    amplitude_changes = [
+        abs(movement_data[i]['amp'] - movement_data[i - 1]['amp'])
+        for i in range(1, len(movement_data))
+    ]
 
     # Calculate the average change in amplitude
     average_change = sum(amplitude_changes) / \
         len(amplitude_changes) if amplitude_changes else 0
 
     # Define a threshold for detecting movement
-    movement_threshold = 2  # You can adjust this value based on your sensor's sensitivity
+    movement_threshold = 0.2  # You can adjust this value based on your sensor's sensitivity
 
     # Determine if movement is detected
     movement_detected = average_change > movement_threshold
@@ -356,6 +373,7 @@ def analyze_activity(movement_data):
         'average_amplitude': average_change,
         'movement_detected': movement_detected
     }
+
 
 
 def turn_off_buzzer():
@@ -436,14 +454,13 @@ def insights():
 
     # Format data for the graph
     activity_data = [
-        {'timestamp': data[1].strftime(
-            '%Y-%m-%d %H:%M:%S'), 'amp': data[0]}
+        {'timestamp': data['timestamp'].strftime(
+            '%Y-%m-%d %H:%M:%S'), 'amp': data['amp']}
         for data in movement_data
     ]
 
     # Render the insights template with the activity metrics, activity data, and recommendations
     return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations)
-
 
 @app.route('/get_thresholds')
 def get_thresholds():
