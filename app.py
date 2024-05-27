@@ -57,7 +57,7 @@ def fetch_smartdoor():
 @app.route('/temperature_data')
 def fetch_temperature_data():
     db_connection = connect_to_database()
-    cursor = db_connection.cursor()
+    cursor = db_connection.cursor(dictionary=True)
     cursor.execute(
         'SELECT * FROM temperature_data ORDER BY timestamp DESC LIMIT 1')
     data = cursor.fetchone()
@@ -70,7 +70,7 @@ def fetch_temperature_data():
 @app.route('/gas_data')
 def fetch_gas_data():
     db_connection = connect_to_database()
-    cursor = db_connection.cursor()
+    cursor = db_connection.cursor(dictionary=True)
     cursor.execute('SELECT * FROM gas_data ORDER BY timestamp DESC LIMIT 1')
     data = cursor.fetchone()
     db_connection.close()
