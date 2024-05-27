@@ -304,8 +304,8 @@ def get_data():
 def get_smartdoor_data():
     data = fetch_smartdoor()
     if data:
-        rfid, msg, time = data[1], data[2], data[3]
-        return jsonify({'rfid': rfid, 'msg': msg, 'time': time})
+        rfid, message, timestamp = data['rfid'], data['message'], data['timestamp']
+        return jsonify({'rfid': rfid, 'message': message, 'timestamp': timestamp})
     else:
         return jsonify({'error': 'No data available'})
 
