@@ -129,13 +129,14 @@
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('door_status').innerText = data.door_status;
-                    document.getElementById('led_statis').innerText = data.led_status;
+                    document.getElementById('led_status').innerText = data.led_status;
                 });
         }
-        
-        setInterval(fetchData, 5000);
+
+        setInterval(fetch_smartdoor_data, 5000);
         window.onload = function () {
-            fetchData();
+            fetch_smartdoor_data()
+            fetch_smartdoor_status()
         }
     </script>
 

@@ -40,6 +40,7 @@ def fetch_status():
     db_connection.close()
     return status_data
 
+
 def fetch_smartdoor_data():
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)
@@ -47,6 +48,7 @@ def fetch_smartdoor_data():
     status_data = cursor.fetchone()
     db_connection.close()
     return status_data
+
 
 def fetch_smartdoor_status():
     db_connection = connect_to_database()
@@ -57,6 +59,8 @@ def fetch_smartdoor_status():
     return status_data
 
 # # Function to fetch threshold settings from the database
+
+
 def fetch_thresholds():
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)
@@ -66,6 +70,8 @@ def fetch_thresholds():
     return thresholds
 
 # # Function to save threshold value
+
+
 def save_threshold(name, value):
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
@@ -302,6 +308,7 @@ def get_data():
     else:
         return jsonify({'error': 'No data available'})
 
+
 @app.route('/smartdoor_data')
 def get_smartdoor_data():
     data = fetch_smartdoor_data()
@@ -311,9 +318,10 @@ def get_smartdoor_data():
         return jsonify({'rfid': rfid, 'message': message})
     else:
         return jsonify({'error': 'No data available'})
-    
+
+
 @app.route('/smartdoor_status')
-def get_smartdoor_data():
+def get_smartdoor_status():
     data = fetch_smartdoor_status()
     if data:
         door_status = data.get('door_status')
@@ -322,6 +330,7 @@ def get_smartdoor_data():
         return jsonify({'door_status': door_status, 'led_status': led_status, 'timestamp': timestamp})
     else:
         return jsonify({'error': 'No data available'})
+
 
 @app.route('/settings')
 def settings():
