@@ -44,9 +44,8 @@ def fetch_status():
 def fetch_smartdoor():
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM access_logs WHERE id = 1")
+    cursor.execute("SELECT * FROM access_logs ORDER BY timestamp DESC LIMIT 1")
     status_data = cursor.fetchone()
-    cursor.close()
     db_connection.close()
     return status_data
 
@@ -300,11 +299,14 @@ def get_data():
     else:
         return jsonify({'error': 'No data available'})
 
+
 @app.route('/data2')
 def get_smartdoor_data():
     data = fetch_smartdoor()
     if data:
-        rfid, message, timestamp = data['rfid'], data['message'], data['timestamp']
+        rfid = data.get('rfid')
+        message = data.get('message')
+        timestamp = data.get('timestamp')
         return jsonify({'rfid': rfid, 'message': message, 'timestamp': timestamp})
     else:
         return jsonify({'error': 'No data available'})

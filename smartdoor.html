@@ -114,16 +114,20 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script>
-            function fetchData() {
+        function fetchData() {
             fetch('/data2')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('rfid').innerText = data.rfid;
-                    document.getElementById('msg').innerText = data.msg;
-                    document.getElementById('time').innerText = data.time;
+                    document.getElementById('msg').innerText = data.message;
+                    document.getElementById('time').innerText = data.timestamp;
                 });
         }
 
+        setInterval(fetchData, 5000);
+        window.onload = function () {
+            fetchData();
+        }
     </script>
 
 </body>
