@@ -70,8 +70,8 @@
                             aria-controls="pills-home" aria-selected="true">SmartBand</a>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="pills-profile-tab" data-toggle="pill" href="#pills-environment"
-                            role="tab" aria-controls="pills-profile" aria-selected="false">Environment</a>
+                        <a class="nav-link" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab"
+                            aria-controls="pills-profile" aria-selected="false">Environment</a>
                     </li>
                     <li class="nav-item" role="presentation">
                         <a class="nav-link" id="pills-contact-tab" data-toggle="pill" href="#pills-contact" role="tab"
@@ -190,7 +190,6 @@
             <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">3
             </div>
         </div>
-    </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -829,6 +828,236 @@
                 .catch(error => console.error('Error fetching and plotting data:', error));
         }
 
+        function fetchSensorData(page = 1) {
+            fetch('/sensor_data')
+                .then(response => response.json())
+                .then(data => {
+                    const rowsPerPage = 20;
+                    const sensorDataBody = document.getElementById('sensor_data_body');
+                    sensorDataBody.innerHTML = '';
+
+                    // Calculate pagination details
+                    const totalRows = data.length;
+                    const totalPages = Math.ceil(totalRows / rowsPerPage);
+                    const start = (page - 1) * rowsPerPage;
+                    const end = start + rowsPerPage;
+
+                    // Display rows for the current page
+                    data.slice(start, end).forEach(entry => {
+                        const formattedDateTime = formatDateTime(entry.timestamp);
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                 <td>${formattedDateTime.time}</td>
+                                 <td>${entry.amp}</td>
+                                 <td>${entry.hr}</td>
+                                 <td>${entry.spo2}</td>
+                                 <td>${entry.ldr}</td>`;
+                        sensorDataBody.appendChild(row);
+                    });
+
+                    // Update pagination
+                    const pagination = document.getElementById('pagination');
+                    pagination.innerHTML = '';
+                    const maxVisiblePages = 5; // Maximum number of pages to display
+                    let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+
+                    if (totalPages > maxVisiblePages && startPage > 1) {
+                        const liFirst = document.createElement('li');
+                        liFirst.className = 'page-item';
+                        const aFirst = document.createElement('a');
+                        aFirst.className = 'page-link';
+                        aFirst.href = '#';
+                        aFirst.innerText = '1';
+                        aFirst.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(1);
+                        });
+                        liFirst.appendChild(aFirst);
+                        pagination.appendChild(liFirst);
+
+                        const liEllipsis = document.createElement('li');
+                        liEllipsis.className = 'page-item disabled';
+                        const aEllipsis = document.createElement('a');
+                        aEllipsis.className = 'page-link';
+                        aEllipsis.href = '#';
+                        aEllipsis.innerText = '...';
+                        liEllipsis.appendChild(aEllipsis);
+                        pagination.appendChild(liEllipsis);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${i === page ? 'active' : ''}`;
+                        const a = document.createElement('a');
+                        a.className = 'page-link';
+                        a.href = '#';
+                        a.innerText = i;
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(i);
+                        });
+                        li.appendChild(a);
+                        pagination.appendChild(li);
+                    }
+
+                    if (totalPages > maxVisiblePages && endPage < totalPages) {
+                        const liEllipsis = document.createElement('li');
+                        liEllipsis.className = 'page-item disabled';
+                        const aEllipsis = document.createElement('a');
+                        aEllipsis.className = 'page-link';
+                        aEllipsis.href = '#';
+                        aEllipsis.innerText = '...';
+                        liEllipsis.appendChild(aEllipsis);
+                        pagination.appendChild(liEllipsis);
+
+                        const liLast = document.createElement('li');
+                        liLast.className = 'page-item';
+                        const aLast = document.createElement('a');
+                        aLast.className = 'page-link';
+                        aLast.href = '#';
+                        aLast.innerText = totalPages;
+                        aLast.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(totalPages);
+                        });
+                        liLast.appendChild(aLast);
+                        pagination.appendChild(liLast);
+                    }
+                })
+                .catch(error => console.error('Error fetching sensor data:', error));
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchSensorData();
+
+            document.getElementById('dateFilter').addEventListener('change', function () {
+                const selectedDate = this.value;
+                const startTimestamp = new Date(selectedDate).toISOString();
+                const nextDay = new Date(selectedDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const endTimestamp = nextDay.toISOString();
+                fetch(`/sensor_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const sensorDataBody = document.getElementById('sensor_data_body');
+                        sensorDataBody.innerHTML = '';
+                        data.forEach(entry => {
+                            const formattedDateTime = formatDateTime(entry.timestamp);
+                            const row = document.createElement('tr');
+                            row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                     <td>${formattedDateTime.time}</td>
+                                     <td>${entry.amp}</td>
+                                     <td>${entry.hr}</td>
+                                     <td>${entry.spo2}</td>
+                                     <td>${entry.ldr}</td>`;
+                            sensorDataBody.appendChild(row);
+                        });
+                    })
+                    .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
+            });
+        });
+        document.getElementById('dateFilter').addEventListener('change', function () {
+            const selectedDate = this.value;
+            const startTimestamp = new Date(selectedDate).toISOString();
+            const nextDay = new Date(selectedDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const endTimestamp = nextDay.toISOString();
+            fetch(`/sensor_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+                .then(response => response.json())
+                .then(data => {
+                    const sensorDataBody = document.getElementById('sensor_data_body');
+                    sensorDataBody.innerHTML = '';
+                    data.forEach(entry => {
+                        const formattedDateTime = formatDateTime(entry.timestamp);
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                         <td>${formattedDateTime.time}</td>
+                                         <td>${entry.amp}</td>
+                                         <td>${entry.hr}</td>
+                                         <td>${entry.spo2}</td>
+                                         <td>${entry.ldr}</td>`;
+                        sensorDataBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
+        });
+
+        $('a[data-toggle="pill"]').on('shown.bs.tab', function (e) {
+            if (e.target.id === 'pills-home-tab') {
+                $('#sensor_data_container').show();
+                $('#dateFilter').show();
+                fetchSensorData();
+            } else {
+                $('#sensor_data_container').hide();
+                $('#dateFilter').hide();
+            }
+        });
+
+        fetch(`/sensor_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+            .then(response => response.json())
+            .then(data => {
+                const timestamps = data.map(entry => formatDateTime(entry.timestamp));
+                const dateTimeLabels = timestamps.map(entry => `${entry.date} ${entry.time}`);
+                const hrValues = data.map(entry => entry.hr);
+                const spo2Values = data.map(entry => entry.spo2);
+                const ampValues = data.map(entry => entry.amp);
+
+                const ctx = document.getElementById('ampChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dateTimeLabels,
+                        datasets: [
+                            {
+                                label: 'Amplitude',
+                                data: ampValues,
+                                fill: false,
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.1
+                            },
+                            {
+                                label: 'Heart Rate',
+                                data: hrValues,
+                                fill: false,
+                                borderColor: 'rgb(255, 99, 132)',
+                                tension: 0.1
+                            },
+                            {
+                                label: 'SpO2',
+                                data: spo2Values,
+                                fill: false,
+                                borderColor: 'rgb(54, 162, 235)',
+                                tension: 0.1
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date and Time'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Values'
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching and plotting data:', error));
+        }
+
         function fetchAmpDataAndPlotGraph(selectedDate) {
             if (!selectedDate) return; // Check if selectedDate is defined
             const dateParts = selectedDate.split('-'); // Split the date into parts
@@ -849,9 +1078,9 @@
                 .then(data => {
                     const timestamps = data.map(entry => formatDateTime(entry.timestamp));
                     const dateTimeLabels = timestamps.map(entry => `${entry.date} ${entry.time}`);
+                    const ampValues = data.map(entry => entry.amp);
                     const hrValues = data.map(entry => entry.hr);
                     const spo2Values = data.map(entry => entry.spo2);
-                    const ampValues = data.map(entry => entry.amp);
 
                     const ctx = document.getElementById('ampChart').getContext('2d');
                     new Chart(ctx, {
@@ -902,96 +1131,32 @@
                 })
                 .catch(error => console.error('Error fetching and plotting data:', error));
         }
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAmpDataAndPlotGraph1(); // Call fetchAmpDataAndPlotGraph on page load
 
-        function fetchEnvironmentDataAndPlotGraph(selectedDate) {
-            if (!selectedDate) return; // Check if selectedDate is defined
-            const dateParts = selectedDate.split('-'); // Split the date into parts
-            if (dateParts.length !== 3) return; // Check if the date has correct parts (year, month, day)
-            const startTimestamp = new Date(selectedDate).toISOString(); // Convert the date to ISO format
-            const nextDay = new Date(selectedDate);
-            nextDay.setDate(nextDay.getDate() + 1);
-            const endTimestamp = nextDay.toISOString();
+            function fetchEnvironmentDataAndFillTable(selectedDate, page = 1, rowsPerPage = 10) {
+                if (!selectedDate) return; // Check if selectedDate is defined
+                const dateParts = selectedDate.split('-'); // Split the date into parts
+                if (dateParts.length !== 3) return; // Check if the date has correct parts (year, month, day)
+                const startTimestamp = new Date(selectedDate).toISOString(); // Convert the date to ISO format
+                const nextDay = new Date(selectedDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const endTimestamp = nextDay.toISOString();
 
-            // Destroy existing chart instance if it exists
-            const existingChart = Chart.getChart('environmentChart');
-            if (existingChart) {
-                existingChart.destroy();
-            }
+                fetch(`/environment_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const tbody = document.getElementById('sensor_data_body1');
+                        tbody.innerHTML = ''; // Clear existing rows
+                        const totalRows = data.length;
+                        const totalPages = Math.ceil(totalRows / rowsPerPage);
+                        const start = (page - 1) * rowsPerPage;
+                        const end = start + rowsPerPage;
+                        const paginatedData = data.slice(start, end);
 
-            fetch(`/environment_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
-                .then(response => response.json())
-                .then(data => {
-                    const timestamps = data.map(entry => formatDateTime(entry.timestamp));
-                    const dateTimeLabels = timestamps.map(entry => `${entry.date} ${entry.time}`);
-                    const tempValues = data.map(entry => entry.temperature);
-                    const gasValues = data.map(entry => entry.gas);
-
-                    const ctx = document.getElementById('environmentChart').getContext('2d');
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: dateTimeLabels,
-                            datasets: [
-                                {
-                                    label: 'Temperature',
-                                    data: tempValues,
-                                    fill: false,
-                                    borderColor: 'rgb(255, 159, 64)',
-                                    tension: 0.1
-                                },
-                                {
-                                    label: 'Gas',
-                                    data: gasValues,
-                                    fill: false,
-                                    borderColor: 'rgb(75, 192, 192)',
-                                    tension: 0.1
-                                }
-                            ]
-                        },
-                        options: {
-                            scales: {
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'Date and Time'
-                                    }
-                                },
-                                y: {
-                                    title: {
-                                        display: true,
-                                        text: 'Values'
-                                    }
-                                }
-                            }
-                        }
-                    });
-                })
-                .catch(error => console.error('Error fetching and plotting data:', error));
-        }
-
-        function fetchEnvironmentDataAndFillTable(selectedDate, page = 1, rowsPerPage = 10) {
-            if (!selectedDate) return; // Check if selectedDate is defined
-            const dateParts = selectedDate.split('-'); // Split the date into parts
-            if (dateParts.length !== 3) return; // Check if the date has correct parts (year, month, day)
-            const startTimestamp = new Date(selectedDate).toISOString(); // Convert the date to ISO format
-            const nextDay = new Date(selectedDate);
-            nextDay.setDate(nextDay.getDate() + 1);
-            const endTimestamp = nextDay.toISOString();
-
-            fetch(`/environment_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
-                .then(response => response.json())
-                .then(data => {
-                    const tbody = document.getElementById('sensor_data_body1');
-                    tbody.innerHTML = ''; // Clear existing rows
-                    const totalRows = data.length;
-                    const totalPages = Math.ceil(totalRows / rowsPerPage);
-                    const start = (page - 1) * rowsPerPage;
-                    const end = start + rowsPerPage;
-                    const paginatedData = data.slice(start, end);
-
-                    paginatedData.forEach(entry => {
-                        const formattedDateTime = formatDateTime(entry.timestamp);
-                        const row = `
+                        paginatedData.forEach(entry => {
+                            const formattedDateTime = formatDateTime(entry.timestamp);
+                            const row = `
                             <tr>
                                 <td>${formattedDateTime.date}</td>
                                 <td>${formattedDateTime.time}</td>
@@ -999,46 +1164,46 @@
                                 <td>${entry.gas}</td>
                             </tr>
                         `;
-                        tbody.insertAdjacentHTML('beforeend', row);
-                    });
+                            tbody.insertAdjacentHTML('beforeend', row);
+                        });
 
-                    // Setup pagination
-                    const pagination = document.getElementById('pagination');
-                    pagination.innerHTML = ''; // Clear existing pagination
-                    for (let i = 1; i <= totalPages; i++) {
-                        const pageItem = `
+                        // Setup pagination
+                        const pagination = document.getElementById('pagination');
+                        pagination.innerHTML = ''; // Clear existing pagination
+                        for (let i = 1; i <= totalPages; i++) {
+                            const pageItem = `
                             <li class="page-item ${i === page ? 'active' : ''}">
                                 <a class="page-link" href="#" onclick="fetchEnvironmentDataAndFillTable('${selectedDate}', ${i})">${i}</a>
                             </li>
                         `;
-                        pagination.insertAdjacentHTML('beforeend', pageItem);
-                    }
-                })
-                .catch(error => console.error('Error fetching and filling table:', error));
-        }
+                            pagination.insertAdjacentHTML('beforeend', pageItem);
+                        }
+                    })
+                    .catch(error => console.error('Error fetching and filling table:', error));
+            }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const dateFilter = document.getElementById('dateFilter');
-            dateFilter.addEventListener('change', function () {
-                const selectedDate = dateFilter.value;
-                fetchAmpDataAndPlotGraph(selectedDate);
-                fetchEnvironmentDataAndPlotGraph(selectedDate);
+            document.addEventListener('DOMContentLoaded', function () {
+                const dateFilter = document.getElementById('dateFilter');
+                dateFilter.addEventListener('change', function () {
+                    const selectedDate = dateFilter.value;
+                    fetchAmpDataAndPlotGraph(selectedDate);
+                    fetchEnvironmentDataAndPlotGraph(selectedDate);
+                });
+
+                /*const dateFilterEnv = document.getElementById('dateFilterEnv');
+                dateFilterEnv.addEventListener('change', function () {
+                    const selectedDate = dateFilterEnv.value;
+                    fetchEnvironmentDataAndFillTable(selectedDate);
+                    fetchEnvironmentDataAndPlotGraph(selectedDate);
+                });*/
+
+                const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
+                dateFilter.value = today;
+                fetchAmpDataAndPlotGraph1();
+                // dateFilterEnv.value = today;
+                // fetchEnvironmentDataAndFillTable(today);
+                // fetchEnvironmentDataAndPlotGraph(today);
             });
-
-            /*const dateFilterEnv = document.getElementById('dateFilterEnv');
-            dateFilterEnv.addEventListener('change', function () {
-                const selectedDate = dateFilterEnv.value;
-                fetchEnvironmentDataAndFillTable(selectedDate);
-                fetchEnvironmentDataAndPlotGraph(selectedDate);
-            });*/
-
-            const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            dateFilter.value = today;
-            fetchAmpDataAndPlotGraph1();
-            // dateFilterEnv.value = today;
-            // fetchEnvironmentDataAndFillTable(today);
-            // fetchEnvironmentDataAndPlotGraph(today);
-        });
 
     </script>
 </body>
