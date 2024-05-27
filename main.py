@@ -196,6 +196,7 @@ while True:
 
         if movement_state == 1:
             ser.write(b'Notify\n')
+            print("notify")
         else:
             ser.write(b'StopNotify|n')
 

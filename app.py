@@ -336,10 +336,26 @@ def get_movement_data():
 
 def analyze_activity(movement_data):
     if not movement_data:
-        return {'average_amplitude': 0}
-    total_amplitude = sum(data[0] for data in movement_data)
-    average_amplitude = total_amplitude / len(movement_data)
-    return {'average_amplitude': average_amplitude}
+        return {'average_amplitude': 0, 'movement_detected': False}
+
+    # Calculate the differences between consecutive amplitude values
+    amplitude_changes = [abs(movement_data[i][0] - movement_data[i - 1][0])
+                         for i in range(1, len(movement_data))]
+
+    # Calculate the average change in amplitude
+    average_change = sum(amplitude_changes) / \
+        len(amplitude_changes) if amplitude_changes else 0
+
+    # Define a threshold for detecting movement
+    movement_threshold = 2  # You can adjust this value based on your sensor's sensitivity
+
+    # Determine if movement is detected
+    movement_detected = average_change > movement_threshold
+
+    return {
+        'average_amplitude': average_change,
+        'movement_detected': movement_detected
+    }
 
 
 def turn_off_buzzer():
@@ -364,21 +380,18 @@ def turn_off_buzzer():
 def notify_user():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
-    # Update the movement value to 1 in the settings table
     cursor.execute("UPDATE settings SET movement = 1")
-    db_connection.commit()
+
     cursor.execute(
         "SELECT version FROM settings ORDER BY version DESC LIMIT 1")
     current_version = cursor.fetchone()[0]
     new_version = current_version + 1
 
-    # Update the version number
     cursor.execute("UPDATE settings SET version = %s", (new_version,))
     db_connection.commit()
     db_connection.close()
 
-    # Schedule to turn off the buzzer after 20 seconds
-    threading.Timer(60, turn_off_buzzer).start()
+    threading.Timer(20, turn_off_buzzer).start()
 
 
 def check_movement():
@@ -389,7 +402,7 @@ def check_movement():
         notify_user()
 
     # Schedule the next check after 30 minutes
-    threading.Timer(30 * 60, check_movement).start()
+    # threading.Timer(30 * 60, check_movement).start()
 
 
 def generate_recommendations(average_amplitude):
