@@ -492,7 +492,7 @@ def sensor_data():
 
 #Environment
 @app.route('/environment_data')
-def sensor_data():
+def sensor_data2():
     start_timestamp = request.args.get('start_timestamp')
     end_timestamp = request.args.get('end_timestamp')
 
@@ -522,7 +522,7 @@ def sensor_data():
 
 #Smartdoor
 @app.route('/door_data')
-def sensor_data():
+def sensor_data3():
     start_timestamp = request.args.get('start_timestamp')
     end_timestamp = request.args.get('end_timestamp')
 
