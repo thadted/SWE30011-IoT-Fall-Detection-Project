@@ -565,7 +565,9 @@ def history():
     cursor = db_connection.cursor()
     cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
     sensor_data = cursor.fetchall()
-    return render_template('history.html', sensor_data=sensor_data)
+    cursor.execute("SELECT rfid, message, timestamp FROM access_logs")
+    rfid = cursor.fetchall()
+    return render_template('history.html', sensor_data=sensor_data, rfid = rfid)
 
 
 @app.route('/sensor_data')
