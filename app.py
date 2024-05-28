@@ -354,7 +354,8 @@ def get_smartdoor_data():
     if data:
         rfid = data.get('rfid')
         message = data.get('message')
-        return jsonify({'rfid': rfid, 'message': message})
+        timestamp = data.get('timestamp')
+        return jsonify({'rfid': rfid, 'message': message, 'timestamp': timestamp})
     else:
         return jsonify({'error': 'No data available'})
 
@@ -365,8 +366,7 @@ def get_smartdoor_status():
     if data:
         door_status = data.get('door_status')
         led_status = data.get('led_status')
-        timestamp = data.get('timestamp')
-        return jsonify({'door_status': door_status, 'led_status': led_status, 'timestamp': timestamp})
+        return jsonify({'door_status': door_status, 'led_status': led_status})
     else:
         return jsonify({'error': 'No data available'})
 
