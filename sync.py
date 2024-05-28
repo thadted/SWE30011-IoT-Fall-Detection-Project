@@ -19,16 +19,16 @@ def fetch_rds_door_status(rds_cursor):
     rds_cursor.execute("SELECT * FROM status_logs WHERE id = 1")
     return rds_cursor.fetchone()
 
-# Update functions
-def update_local_door_settings(local_cursor, settings):
-    update_query = """UPDATE access_logs SET rfid = %s, message = %s, timestamp = %s WHERE id = %s"""
+# Insert functions
+def insert_local_door_settings(local_cursor, settings):
+    insert_query = """INSERT INTO access_logs (rfid, message, timestamp) VALUES (%s, %s, %s)"""
     for setting in settings:
-        local_cursor.execute(update_query, setting)
+        local_cursor.execute(insert_query, (setting[1], setting[2], setting[3]))
 
-def update_rds_door_settings(rds_cursor, settings):
-    update_query = """UPDATE access_logs SET rfid = %s, message = %s, timestamp = %s WHERE id = %s"""
+def insert_rds_door_settings(rds_cursor, settings):
+    insert_query = """INSERT INTO access_logs (rfid, message, timestamp) VALUES (%s, %s, %s)"""
     for setting in settings:
-        rds_cursor.execute(update_query, setting)
+        rds_cursor.execute(insert_query, (setting[1], setting[2], setting[3]))
 
 def update_local_door_status(local_cursor, status):
     update_query = """UPDATE status_logs SET door_status = %s, led_status = %s, timestamp = %s, version = %s WHERE id = 1"""
@@ -37,24 +37,41 @@ def update_local_door_status(local_cursor, status):
 def update_rds_door_status(rds_cursor, status):
     update_query = """UPDATE status_logs SET door_status = %s, led_status = %s, timestamp = %s, version = %s WHERE id = 1"""
     rds_cursor.execute(update_query, status[1:])
+    
+# Comparison function
+def compare_and_sync_settings(local_settings, rds_settings, rds_cursor):
+    if not rds_settings:
+        # If RDS settings are empty, insert all local settings
+        insert_rds_door_settings(rds_cursor, local_settings)
+        print(f"Inserted {len(local_settings)} new settings into RDS.")
+        return
+
+    latest_rds_timestamp = max(setting[3] for setting in rds_settings)
+
+    new_settings = [setting for setting in local_settings if setting[3] > latest_rds_timestamp]
+
+    if new_settings:
+        insert_rds_door_settings(rds_cursor, new_settings)
+        print(f"Inserted {len(new_settings)} new settings into RDS.")
 
 # Sync functions
 def sync_door_settings(local_cursor, rds_cursor, rds_db_connection, local_db_connection):
     local_settings = fetch_local_door_settings(local_cursor)
     rds_settings = fetch_rds_door_settings(rds_cursor)
 
-    if not local_settings or not rds_settings:
-        print("Error: Missing door settings data in one of the databases.")
+    if not local_settings:
+        print("Error: Missing door settings data in local database.")
         return
 
-    print("Syncing door settings...")
-    update_local_door_settings(local_cursor, rds_settings)
-    update_rds_door_settings(rds_cursor, local_settings)
+    print("Local door settings fetched:", local_settings)
+    print("RDS door settings fetched:", rds_settings)
 
+    print("Syncing door settings...")
+    compare_and_sync_settings(local_settings, rds_settings, rds_cursor)
     local_db_connection.commit()
     rds_db_connection.commit()
     print("Door settings synced.")
-
+    
 def sync_door_status(local_cursor, rds_cursor, rds_db_connection, local_db_connection):
     local_status = fetch_local_door_status(local_cursor)
     rds_status = fetch_rds_door_status(rds_cursor)
@@ -78,7 +95,7 @@ def sync_door_status(local_cursor, rds_cursor, rds_db_connection, local_db_conne
         rds_db_connection.commit()
     else:
         print("No updates needed. Both door statuses are up to date.")
-        
+
 # Main sync function
 def sync_databases():
     local_db_connection = mysql.connector.connect(
@@ -99,6 +116,30 @@ def sync_databases():
 
     while True:
         try:
+            
+            def reconnect_local_db():
+                return mysql.connector.connect(
+                    host="localhost",
+                    user="pi",
+                    password="pass1234",
+                    database="sensor_db"
+        )
+
+            def reconnect_rds_db():
+                return mysql.connector.connect(
+                    host="database-1.cjdvhndhcwh8.us-east-1.rds.amazonaws.com",
+                    user="admin",
+                    password="12345678",
+                    database="fall_sensor"
+        )
+
+            # Usage in the main sync function
+            local_db_connection = reconnect_local_db()
+            local_cursor = local_db_connection.cursor()
+
+            rds_db_connection = reconnect_rds_db()
+            rds_cursor = rds_db_connection.cursor()
+
             # Sync settings
             sync_door_settings(local_cursor, rds_cursor, rds_db_connection, local_db_connection)
 

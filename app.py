@@ -218,8 +218,6 @@ def fetch_notifications(filter_option):
     return notifications_data
 
 # Route to display notifications
-
-
 @app.route('/notifications')
 def notifications():
     filter_option = request.args.get('filter', 'all')
@@ -315,7 +313,8 @@ def get_smartdoor_data():
     if data:
         rfid = data.get('rfid')
         message = data.get('message')
-        return jsonify({'rfid': rfid, 'message': message})
+        timestamp = data.get('timestamp')
+        return jsonify({'rfid': rfid, 'message': message, 'timestamp': timestamp})
     else:
         return jsonify({'error': 'No data available'})
 
@@ -326,8 +325,7 @@ def get_smartdoor_status():
     if data:
         door_status = data.get('door_status')
         led_status = data.get('led_status')
-        timestamp = data.get('timestamp')
-        return jsonify({'door_status': door_status, 'led_status': led_status, 'timestamp': timestamp})
+        return jsonify({'door_status': door_status, 'led_status': led_status})
     else:
         return jsonify({'error': 'No data available'})
 
@@ -450,16 +448,19 @@ def get_actuator_status():
     db_connection.close()
     return jsonify({'buzzer_state': bool(buzzer_state), 'led_state': led_state})
 
-
 @app.route('/history')
 def history():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
     cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
     sensor_data = cursor.fetchall()
-    return render_template('history.html', sensor_data=sensor_data)
+    cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
+    environment_data = cursor.fetchall()
+    cursor.execute("SELECT rfid, message, timestamp FROM access_logs")
+    rfid_data = cursor.fetchall()
+    return render_template('history.html', sensor_data=sensor_data, environment_data = environment_data, rfid_data = rfid_data)
 
-
+#Smartband
 @app.route('/sensor_data')
 def sensor_data():
     start_timestamp = request.args.get('start_timestamp')
@@ -489,12 +490,92 @@ def sensor_data():
     db_connection.close()
     return jsonify(sensor_data)
 
+#Environment
+@app.route('/environment_data')
+def sensor_data():
+    start_timestamp = request.args.get('start_timestamp')
+    end_timestamp = request.args.get('end_timestamp')
 
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+
+    if start_timestamp and end_timestamp:
+        # Convert start and end timestamps to datetime objects
+        start_datetime = datetime.fromisoformat(start_timestamp)
+        end_datetime = datetime.fromisoformat(end_timestamp)
+
+        # Convert start and end datetime objects to UTC
+        start_utc = start_datetime.astimezone(utc)
+        end_utc = end_datetime.astimezone(utc)
+
+        # Filter data based on the timestamp range
+        cursor.execute(
+            "SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data WHERE timestamp BETWEEN %s AND %s", (start_utc, end_utc))
+    else:
+        # Otherwise, fetch all data
+        cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
+
+    sensor_data = cursor.fetchall()
+    cursor.close()
+    db_connection.close()
+    return jsonify(sensor_data)
+
+#Smartdoor
+@app.route('/door_data')
+def sensor_data():
+    start_timestamp = request.args.get('start_timestamp')
+    end_timestamp = request.args.get('end_timestamp')
+
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+
+    if start_timestamp and end_timestamp:
+        # Convert start and end timestamps to datetime objects
+        start_datetime = datetime.fromisoformat(start_timestamp)
+        end_datetime = datetime.fromisoformat(end_timestamp)
+
+        # Convert start and end datetime objects to UTC
+        start_utc = start_datetime.astimezone(utc)
+        end_utc = end_datetime.astimezone(utc)
+
+        # Filter data based on the timestamp range
+        cursor.execute(
+            "SELECT rfid, message, timestamp FROM access_logs WHERE timestamp BETWEEN %s AND %s", (start_utc, end_utc))
+    else:
+        # Otherwise, fetch all data
+        cursor.execute("SELECT rfid, message, timestamp FROM access_logs")
+
+    sensor_data = cursor.fetchall()
+    cursor.close()
+    db_connection.close()
+    return jsonify(sensor_data)
+
+#Smartband
 def fetch_data_by_timestamp(timestamp):
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)
     cursor.execute(
         'SELECT * FROM sensor_data WHERE timestamp = %s', (timestamp,))
+    data = cursor.fetchall()
+    db_connection.close()
+    return data
+
+#Environment
+def fetch_data_by_timestamp2(timestamp):
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute(
+        'SELECT * FROM sensor_data WHERE timestamp = %s', (timestamp,))
+    data = cursor.fetchall()
+    db_connection.close()
+    return data
+
+#Smartdoor
+def fetch_data_by_timestamp3(timestamp):
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute(
+        'SELECT * FROM access_logs WHERE timestamp = %s', (timestamp,))
     data = cursor.fetchall()
     db_connection.close()
     return data
