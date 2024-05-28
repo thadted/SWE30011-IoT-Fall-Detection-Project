@@ -79,7 +79,11 @@
                     </li>
                 </ul>
             </div>
+
+            <!-- Content -->
             <div class="tab-content" id="pills-tabContent">
+
+                <!-- SmartBand -->
                 <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
                     <div class="form-group">
                         <label for="dateFilter">Filter by Date:</label>
@@ -115,34 +119,77 @@
                     </div>
                 </div>
 
-                <div class="tab-pane fade" id="pills-environment" role="tabpanel" aria-labelledby="pills-profile-tab">
-                    <div class="form-group">
-                        <label for="dateFilter">Filter by Date:</label>
-                        <input type="date" id="dateFilter" class="form-control">
+                <!-- Environment -->
+                <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+
+                    <div class="tab-pane fade show active" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+                        <div class="form-group">
+                            <label for="dateFilter">Filter by Date:</label>
+                            <input type="date" id="dateFilter" class="form-control">
+                        </div>
+                        <div id="sensor_data_container" class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Amp</th>
+                                        <th>Heart Rate</th>
+                                        <th>SpO2</th>
+                                        <th>LDR Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="environment_data_body"></tbody>
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination justify-content-center" id="pagination"></ul>
+                                </nav>
+                            </table>
+                        </div>
+                        <br />
+                        <br />
+                        <div class="container">
+                            <h3 class="text-center">Historical Data Graphs</h3>
+                            <div class="row">
+                                <div class="col-md-12" width="900" height="600">
+                                    <canvas id="ampChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div id="sensor_data_container" class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Temperature</th>
-                                    <th>Gas Value</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sensor_data_body"></tbody>
-                            <nav aria-label="Page navigation example">
-                                <ul class="pagination justify-content-center" id="pagination"></ul>
-                            </nav>
-                        </table>
-                    </div>
-                    <br />
-                    <br />
-                    <div class="container">
-                        <h3 class="text-center">Historical Data Graphs</h3>
-                        <div class="row">
-                            <div class="col-md-12" width="900" height="600">
-                                <canvas id="environmentChart"></canvas>
+                </div>
+
+                <!-- SmartDoor -->
+                <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
+
+                    <div class="tab-pane fade show active" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
+                        <div class="form-group">
+                            <label for="dateFilter">Filter by Date:</label>
+                            <input type="date" id="dateFilter" class="form-control">
+                        </div>
+                        <div id="sensor_data_container" class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>RFID</th>
+                                        <th>Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="door_data_body"></tbody>
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination justify-content-center" id="pagination3"></ul>
+                                </nav>
+                            </table>
+                        </div>
+                        <br />
+                        <br />
+                        <div class="container">
+                            <h3 class="text-center">Historical Data Graphs</h3>
+                            <div class="row">
+                                <div class="col-md-12" width="900" height="600">
+                                    <canvas id="ampChart"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -161,14 +208,492 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script>
         function formatDateTime(timestamp) {
-            const date = new Date(timestamp);
-            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
-            const formattedDate = date.toLocaleDateString(undefined, options);
-            const formattedTime = date.toLocaleTimeString(undefined, options);
-            return {
-                date: formattedDate,
-                time: formattedTime
-            };
+            const dateTime = new Date(timestamp);
+            const utcDateTime = new Date(dateTime.getUTCFullYear(), dateTime.getUTCMonth(), dateTime.getUTCDate(),
+                dateTime.getUTCHours(), dateTime.getUTCMinutes(), dateTime.getUTCSeconds());
+            const year = utcDateTime.getFullYear();
+            const month = ('0' + (utcDateTime.getMonth() + 1)).slice(-2);
+            const day = ('0' + utcDateTime.getDate()).slice(-2);
+            const hours = ('0' + utcDateTime.getHours()).slice(-2);
+            const minutes = ('0' + utcDateTime.getMinutes()).slice(-2);
+            const seconds = ('0' + utcDateTime.getSeconds()).slice(-2);
+            const formattedDate = `${day}/${month}/${year}`;
+            const formattedTime = `${hours}:${minutes}:${seconds}`;
+            return { date: formattedDate, time: formattedTime };
+        }
+
+        //Smartband
+        function fetchSensorData(page = 1) {
+            fetch('/sensor_data')
+                .then(response => response.json())
+                .then(data => {
+                    const rowsPerPage = 20;
+                    const sensorDataBody = document.getElementById('sensor_data_body');
+                    sensorDataBody.innerHTML = '';
+
+                    // Calculate pagination details
+                    const totalRows = data.length;
+                    const totalPages = Math.ceil(totalRows / rowsPerPage);
+                    const start = (page - 1) * rowsPerPage;
+                    const end = start + rowsPerPage;
+
+                    // Display rows for the current page
+                    data.slice(start, end).forEach(entry => {
+                        const formattedDateTime = formatDateTime(entry.timestamp);
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                 <td>${formattedDateTime.time}</td>
+                                 <td>${entry.amp}</td>
+                                 <td>${entry.hr}</td>
+                                 <td>${entry.spo2}</td>
+                                 <td>${entry.ldr}</td>`;
+                        sensorDataBody.appendChild(row);
+                    });
+
+                    // Update pagination
+                    const pagination = document.getElementById('pagination');
+                    pagination.innerHTML = '';
+                    const maxVisiblePages = 5; // Maximum number of pages to display
+                    let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+
+                    if (totalPages > maxVisiblePages && startPage > 1) {
+                        const liFirst = document.createElement('li');
+                        liFirst.className = 'page-item';
+                        const aFirst = document.createElement('a');
+                        aFirst.className = 'page-link';
+                        aFirst.href = '#';
+                        aFirst.innerText = '1';
+                        aFirst.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(1);
+                        });
+                        liFirst.appendChild(aFirst);
+                        pagination.appendChild(liFirst);
+
+                        const liEllipsis = document.createElement('li');
+                        liEllipsis.className = 'page-item disabled';
+                        const aEllipsis = document.createElement('a');
+                        aEllipsis.className = 'page-link';
+                        aEllipsis.href = '#';
+                        aEllipsis.innerText = '...';
+                        liEllipsis.appendChild(aEllipsis);
+                        pagination.appendChild(liEllipsis);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${i === page ? 'active' : ''}`;
+                        const a = document.createElement('a');
+                        a.className = 'page-link';
+                        a.href = '#';
+                        a.innerText = i;
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(i);
+                        });
+                        li.appendChild(a);
+                        pagination.appendChild(li);
+                    }
+
+                    if (totalPages > maxVisiblePages && endPage < totalPages) {
+                        const liEllipsis = document.createElement('li');
+                        liEllipsis.className = 'page-item disabled';
+                        const aEllipsis = document.createElement('a');
+                        aEllipsis.className = 'page-link';
+                        aEllipsis.href = '#';
+                        aEllipsis.innerText = '...';
+                        liEllipsis.appendChild(aEllipsis);
+                        pagination.appendChild(liEllipsis);
+
+                        const liLast = document.createElement('li');
+                        liLast.className = 'page-item';
+                        const aLast = document.createElement('a');
+                        aLast.className = 'page-link';
+                        aLast.href = '#';
+                        aLast.innerText = totalPages;
+                        aLast.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(totalPages);
+                        });
+                        liLast.appendChild(aLast);
+                        pagination.appendChild(liLast);
+                    }
+                })
+                .catch(error => console.error('Error fetching sensor data:', error));
+        }
+
+        // Environment
+        function fetchEnvironmentData(page = 1) {
+            fetch('/environment_data')
+                .then(response => response.json())
+                .then(data => {
+                    const rowsPerPage = 20;
+                    const sensorDataBody = document.getElementById('environment_data_body');
+                    sensorDataBody.innerHTML = '';
+
+                    // Calculate pagination details
+                    const totalRows = data.length;
+                    const totalPages = Math.ceil(totalRows / rowsPerPage);
+                    const start = (page - 1) * rowsPerPage;
+                    const end = start + rowsPerPage;
+
+                    // Display rows for the current page
+                    data.slice(start, end).forEach(entry => {
+                        const formattedDateTime = formatDateTime(entry.timestamp);
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                 <td>${formattedDateTime.time}</td>
+                                 <td>${entry.amp}</td>
+                                 <td>${entry.hr}</td>
+                                 <td>${entry.spo2}</td>
+                                 <td>${entry.ldr}</td>`;
+                        sensorDataBody.appendChild(row);
+                    });
+
+                    // Update pagination
+                    const pagination = document.getElementById('pagination');
+                    pagination.innerHTML = '';
+                    const maxVisiblePages = 5; // Maximum number of pages to display
+                    let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+
+                    if (totalPages > maxVisiblePages && startPage > 1) {
+                        const liFirst = document.createElement('li');
+                        liFirst.className = 'page-item';
+                        const aFirst = document.createElement('a');
+                        aFirst.className = 'page-link';
+                        aFirst.href = '#';
+                        aFirst.innerText = '1';
+                        aFirst.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(1);
+                        });
+                        liFirst.appendChild(aFirst);
+                        pagination.appendChild(liFirst);
+
+                        const liEllipsis = document.createElement('li');
+                        liEllipsis.className = 'page-item disabled';
+                        const aEllipsis = document.createElement('a');
+                        aEllipsis.className = 'page-link';
+                        aEllipsis.href = '#';
+                        aEllipsis.innerText = '...';
+                        liEllipsis.appendChild(aEllipsis);
+                        pagination.appendChild(liEllipsis);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${i === page ? 'active' : ''}`;
+                        const a = document.createElement('a');
+                        a.className = 'page-link';
+                        a.href = '#';
+                        a.innerText = i;
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(i);
+                        });
+                        li.appendChild(a);
+                        pagination.appendChild(li);
+                    }
+
+                    if (totalPages > maxVisiblePages && endPage < totalPages) {
+                        const liEllipsis = document.createElement('li');
+                        liEllipsis.className = 'page-item disabled';
+                        const aEllipsis = document.createElement('a');
+                        aEllipsis.className = 'page-link';
+                        aEllipsis.href = '#';
+                        aEllipsis.innerText = '...';
+                        liEllipsis.appendChild(aEllipsis);
+                        pagination.appendChild(liEllipsis);
+
+                        const liLast = document.createElement('li');
+                        liLast.className = 'page-item';
+                        const aLast = document.createElement('a');
+                        aLast.className = 'page-link';
+                        aLast.href = '#';
+                        aLast.innerText = totalPages;
+                        aLast.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchSensorData(totalPages);
+                        });
+                        liLast.appendChild(aLast);
+                        pagination.appendChild(liLast);
+                    }
+                })
+                .catch(error => console.error('Error fetching sensor data:', error));
+        }
+
+        // Smartdoor
+        function fetchDoorData(page = 1) {
+            fetch('/door_data')
+                .then(response => response.json())
+                .then(data => {
+                    const rowsPerPage = 20;
+                    const sensorDataBody = document.getElementById('door_data_body');
+                    sensorDataBody.innerHTML = '';
+
+                    // Calculate pagination details
+                    const totalRows = data.length;
+                    const totalPages = Math.ceil(totalRows / rowsPerPage);
+                    const start = (page - 1) * rowsPerPage;
+                    const end = start + rowsPerPage;
+
+                    // Display rows for the current page
+                    data.slice(start, end).forEach(entry => {
+                        const formattedDateTime = formatDateTime(entry.timestamp);
+                        const row = document.createElement('tr');
+                        row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                 <td>${formattedDateTime.time}</td>
+                                 <td>${entry.rfid}</td>
+                                 <td>${entry.message}</td>`;
+                        sensorDataBody.appendChild(row);
+                    });
+
+                    // Update pagination
+                    const pagination = document.getElementById('pagination3');
+                    pagination.innerHTML = '';
+                    const maxVisiblePages = 5; // Maximum number of pages to display
+                    let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                    if (endPage - startPage + 1 < maxVisiblePages) {
+                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                    }
+
+                    if (totalPages > maxVisiblePages && startPage > 1) {
+                        const liFirst = document.createElement('li');
+                        liFirst.className = 'page-item';
+                        const aFirst = document.createElement('a');
+                        aFirst.className = 'page-link';
+                        aFirst.href = '#';
+                        aFirst.innerText = '1';
+                        aFirst.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchDoorData(1);
+                        });
+                        liFirst.appendChild(aFirst);
+                        pagination.appendChild(liFirst);
+
+                        const liEllipsis = document.createElement('li');
+                        liEllipsis.className = 'page-item disabled';
+                        const aEllipsis = document.createElement('a');
+                        aEllipsis.className = 'page-link';
+                        aEllipsis.href = '#';
+                        aEllipsis.innerText = '...';
+                        liEllipsis.appendChild(aEllipsis);
+                        pagination.appendChild(liEllipsis);
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                        const li = document.createElement('li');
+                        li.className = `page-item ${i === page ? 'active' : ''}`;
+                        const a = document.createElement('a');
+                        a.className = 'page-link';
+                        a.href = '#';
+                        a.innerText = i;
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchDoorData(i);
+                        });
+                        li.appendChild(a);
+                        pagination.appendChild(li);
+                    }
+
+                    if (totalPages > maxVisiblePages && endPage < totalPages) {
+                        const liEllipsis = document.createElement('li');
+                        liEllipsis.className = 'page-item disabled';
+                        const aEllipsis = document.createElement('a');
+                        aEllipsis.className = 'page-link';
+                        aEllipsis.href = '#';
+                        aEllipsis.innerText = '...';
+                        liEllipsis.appendChild(aEllipsis);
+                        pagination.appendChild(liEllipsis);
+
+                        const liLast = document.createElement('li');
+                        liLast.className = 'page-item';
+                        const aLast = document.createElement('a');
+                        aLast.className = 'page-link';
+                        aLast.href = '#';
+                        aLast.innerText = totalPages;
+                        aLast.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            fetchDoorData(totalPages);
+                        });
+                        liLast.appendChild(aLast);
+                        pagination.appendChild(liLast);
+                    }
+                })
+                .catch(error => console.error('Error fetching sensor data:', error));
+        }
+
+        // Smartband
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchSensorData();
+            document.getElementById('dateFilter').addEventListener('change', function () {
+                const selectedDate = this.value;
+                const startTimestamp = new Date(selectedDate).toISOString();
+                const nextDay = new Date(selectedDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const endTimestamp = nextDay.toISOString();
+                fetch(`/sensor_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const sensorDataBody = document.getElementById('sensor_data_body');
+                        sensorDataBody.innerHTML = '';
+                        data.forEach(entry => {
+                            const formattedDateTime = formatDateTime(entry.timestamp);
+                            const row = document.createElement('tr');
+                            row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                     <td>${formattedDateTime.time}</td>
+                                     <td>${entry.amp}</td>
+                                     <td>${entry.hr}</td>
+                                     <td>${entry.spo2}</td>
+                                     <td>${entry.ldr}</td>`;
+                            sensorDataBody.appendChild(row);
+                        });
+                    })
+                    .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
+            });
+        });
+
+        // Environment
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchSensorData();
+
+            document.getElementById('dateFilter').addEventListener('change', function () {
+                const selectedDate = this.value;
+                const startTimestamp = new Date(selectedDate).toISOString();
+                const nextDay = new Date(selectedDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const endTimestamp = nextDay.toISOString();
+                fetch(`/environment_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const sensorDataBody = document.getElementById('environment_data_body');
+                        sensorDataBody.innerHTML = '';
+                        data.forEach(entry => {
+                            const formattedDateTime = formatDateTime(entry.timestamp);
+                            const row = document.createElement('tr');
+                            row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                     <td>${formattedDateTime.time}</td>
+                                     <td>${entry.amp}</td>
+                                     <td>${entry.hr}</td>
+                                     <td>${entry.spo2}</td>
+                                     <td>${entry.ldr}</td>`;
+                            sensorDataBody.appendChild(row);
+                        });
+                    })
+                    .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
+            });
+        });
+
+            // Smartdoor
+            document.addEventListener('DOMContentLoaded', () => {
+            fetchDoorData();
+
+            document.getElementById('dateFilter').addEventListener('change', function () {
+                const selectedDate = this.value;
+                const startTimestamp = new Date(selectedDate).toISOString();
+                const nextDay = new Date(selectedDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const endTimestamp = nextDay.toISOString();
+                fetch(`/door_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const sensorDataBody = document.getElementById('door_data_body');
+                        sensorDataBody.innerHTML = '';
+                        data.forEach(entry => {
+                            const formattedDateTime = formatDateTime(entry.timestamp);
+                            const row = document.createElement('tr');
+                            row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                     <td>${formattedDateTime.time}</td>
+                                     <td>${entry.rfid}</td>
+                                     <td>${entry.message}</td>`;
+                            sensorDataBody.appendChild(row);
+                        });
+                    })
+                    .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
+            });
+        });
+
+        $('a[data-toggle="pill"]').on('shown.bs.tab', function (e) {
+            if (e.target.id === 'pills-home-tab') {
+                $('#sensor_data_container').show();
+                $('#dateFilter').show();
+                fetchSensorData();
+            } else {
+                $('#sensor_data_container').hide();
+                $('#dateFilter').hide();
+            }
+        });
+
+        function fetchAmpDataAndPlotGraph1() {
+            fetch('/sensor_data')
+                .then(response => response.json())
+                .then(data => {
+                    const timestamps = data.map(entry => formatDateTime(entry.timestamp));
+                    const dateTimeLabels = timestamps.map(entry => `${entry.date} ${entry.time}`);
+                    const ampValues = data.map(entry => entry.amp);
+                    const hrValues = data.map(entry => entry.hr);
+                    const spo2Values = data.map(entry => entry.spo2);
+
+                    const ctx = document.getElementById('ampChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: dateTimeLabels,
+                            datasets: [
+                                {
+                                    label: 'Amplitude',
+                                    data: ampValues,
+                                    fill: false,
+                                    borderColor: 'rgb(75, 192, 192)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'Heart Rate',
+                                    data: hrValues,
+                                    fill: false,
+                                    borderColor: 'rgb(255, 99, 132)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: 'SpO2',
+                                    data: spo2Values,
+                                    fill: false,
+                                    borderColor: 'rgb(54, 162, 235)',
+                                    tension: 0.1
+                                }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Date and Time'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Values'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching and plotting data:', error));
         }
 
         function fetchAmpDataAndPlotGraph(selectedDate) {
