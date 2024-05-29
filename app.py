@@ -6,6 +6,7 @@ from pytz import timezone, utc
 from threading import Thread, Event
 import time
 import pytz
+import threading
 app = Flask(__name__)
 
 # Function to establish database connection
@@ -57,6 +58,44 @@ def fetch_smartdoor_status():
     status_data = cursor.fetchone()
     db_connection.close()
     return status_data
+
+# Function to fetch data from the temperature_data table
+
+
+@app.route('/temperature_data')
+def fetch_temperature_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute(
+        'SELECT * FROM temperature_data ORDER BY timestamp DESC LIMIT 1')
+    data = cursor.fetchone()
+    db_connection.close()
+    return data
+
+# Function to fetch data from the gas_data table
+
+
+@app.route('/gas_data')
+def fetch_gas_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute('SELECT * FROM gas_data ORDER BY timestamp DESC LIMIT 1')
+    data = cursor.fetchone()
+    db_connection.close()
+    return data
+
+# Function to fetch data from the location_data table
+
+
+@app.route('/location_data')
+def fetch_location_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute(
+        'SELECT * FROM location_data ORDER BY timestamp DESC LIMIT 1')
+    data = cursor.fetchone()
+    db_connection.close()
+    return data
 
 # # Function to fetch threshold settings from the database
 
@@ -205,10 +244,10 @@ def fetch_notifications(filter_option):
 
     if filter_option == 'unread':
         cursor.execute(
-            "SELECT * FROM notifications WHERE read = FALSE ORDER BY timestamp DESC")
+            "SELECT * FROM notifications WHERE `read` = FALSE ORDER BY timestamp DESC")
     elif filter_option == 'read':
         cursor.execute(
-            "SELECT * FROM notifications WHERE read = TRUE ORDER BY timestamp DESC")
+            "SELECT * FROM notifications WHERE `read` = TRUE ORDER BY timestamp DESC")
     else:
         cursor.execute("SELECT * FROM notifications ORDER BY timestamp DESC")
 
@@ -249,7 +288,7 @@ def mark_read(notification_id):
         cursor.execute("UPDATE status SET version = version + 1 WHERE id = 1")
         # Mark the notification as read
         cursor.execute(
-            "UPDATE notifications SET read = TRUE WHERE id = %s", (notification_id,))
+            "UPDATE notifications SET `read` = TRUE WHERE id = %s", (notification_id,))
 
         db_connection.commit()
         cursor.close()
@@ -337,24 +376,78 @@ def settings():
 
 def get_movement_data():
     db_connection = connect_to_database()
-    cursor = db_connection.cursor()
-    # Calculate the timestamp 30 minutes ago
-    thirty_minutes_ago = datetime.utcnow() - timedelta(minutes=30)
+    cursor = db_connection.cursor(dictionary=True)
+
+    # Define the local timezone
+    local_timezone = pytz.timezone('Asia/Singapore')
+
+    # Get the current UTC time and convert it to the local time
+    utc_time = datetime.utcnow().replace(tzinfo=pytz.utc)
+    local_time = utc_time.astimezone(local_timezone)
+
+    # Calculate the timestamp 30 minutes ago in local time
+    thirty_minutes_ago_local = local_time - timedelta(minutes=30)
+
+    # Convert 30 minutes ago local time back to UTC for the database query
+    thirty_minutes_ago_utc = thirty_minutes_ago_local.astimezone(pytz.utc)
+
+    # Query the database for data in the last 30 minutes
     cursor.execute(
-        'SELECT amp, timestamp FROM sensor_data WHERE timestamp >= %s', (thirty_minutes_ago,))
+        'SELECT amp, timestamp FROM sensor_data WHERE timestamp >= %s',
+        (thirty_minutes_ago_utc,)
+    )
     data = cursor.fetchall()
+
     db_connection.close()
     return data
+
+
 
 # Function to analyze activity level
 
 
 def analyze_activity(movement_data):
     if not movement_data:
-        return {'average_amplitude': 0}
-    total_amplitude = sum(data[0] for data in movement_data)
-    average_amplitude = total_amplitude / len(movement_data)
-    return {'average_amplitude': average_amplitude}
+        return {'average_amplitude': 0, 'movement_detected': False}
+
+    # Calculate the differences between consecutive amplitude values
+    amplitude_changes = [
+        abs(movement_data[i]['amp'] - movement_data[i - 1]['amp'])
+        for i in range(1, len(movement_data))
+    ]
+
+    # Calculate the average change in amplitude
+    average_change = sum(amplitude_changes) / \
+        len(amplitude_changes) if amplitude_changes else 0
+
+    # Define a threshold for detecting movement
+    movement_threshold = 0.2  # You can adjust this value based on your sensor's sensitivity
+
+    # Determine if movement is detected
+    movement_detected = average_change > movement_threshold
+
+    return {
+        'average_amplitude': average_change,
+        'movement_detected': movement_detected
+    }
+
+
+
+def turn_off_buzzer():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    cursor.execute("UPDATE settings SET movement = 0")
+    db_connection.commit()
+
+    cursor.execute(
+        "SELECT version FROM settings ORDER BY version DESC LIMIT 1")
+    current_version = cursor.fetchone()[0]
+    new_version = current_version + 1
+
+    # Update the version number
+    cursor.execute("UPDATE settings SET version = %s", (new_version,))
+    db_connection.commit()
+    db_connection.close()
 
 # Function to notify user by turning on the buzzer
 
@@ -362,14 +455,33 @@ def analyze_activity(movement_data):
 def notify_user():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
-    # Update the buzzer_activation value to True in the settings table
-    cursor.execute("UPDATE settings SET buzzer_activation = 2")
+    cursor.execute("UPDATE settings SET movement = 1")
+
+    cursor.execute(
+        "SELECT version FROM settings ORDER BY version DESC LIMIT 1")
+    current_version = cursor.fetchone()[0]
+    new_version = current_version + 1
+
+    cursor.execute("UPDATE settings SET version = %s", (new_version,))
     db_connection.commit()
     db_connection.close()
 
+    threading.Timer(5, turn_off_buzzer).start()
+
+
+def check_movement():
+    movement_data = get_movement_data()
+    activity_metrics = analyze_activity(movement_data)
+
+    if activity_metrics['average_amplitude'] < 1:
+        notify_user()
+
+    # Schedule the next check after 30 minutes
+    threading.Timer(30 * 60, check_movement).start()
+
 
 def generate_recommendations(average_amplitude):
-    if average_amplitude < 0.5:
+    if average_amplitude < 1:
         return [
             "Take a short walk every hour.",
             "Do some stretching exercises.",
@@ -397,27 +509,23 @@ def insights():
     recommendations = generate_recommendations(
         activity_metrics['average_amplitude'])
 
-    # Check if activity level is below threshold and notify user
-    if activity_metrics['average_amplitude'] < 1:
-        notify_user()
-
-    local_timezone = pytz.timezone('Asia/Singapore')
-
     # Format data for the graph
     activity_data = [
-        {'timestamp': data[1].strftime(
-            '%Y-%m-%d %H:%M:%S'), 'amp': data[0]}
+        {'timestamp': data['timestamp'].strftime(
+            '%Y-%m-%d %H:%M:%S'), 'amp': data['amp']}
         for data in movement_data
     ]
 
     # Render the insights template with the activity metrics, activity data, and recommendations
     return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations)
 
-#Smartband
 @app.route('/get_thresholds')
 def get_thresholds():
     thresholds = fetch_thresholds()
     return jsonify(thresholds)
+
+
+check_movement()
 
 
 @app.route('/save_threshold', methods=['POST'])
@@ -491,36 +599,6 @@ def sensor_data():
     db_connection.close()
     return jsonify(sensor_data)
 
-#Environment
-@app.route('/environment_data')
-def sensor_data2():
-    start_timestamp = request.args.get('start_timestamp')
-    end_timestamp = request.args.get('end_timestamp')
-
-    db_connection = connect_to_database()
-    cursor = db_connection.cursor(dictionary=True)
-
-    if start_timestamp and end_timestamp:
-        # Convert start and end timestamps to datetime objects
-        start_datetime = datetime.fromisoformat(start_timestamp)
-        end_datetime = datetime.fromisoformat(end_timestamp)
-
-        # Convert start and end datetime objects to UTC
-        start_utc = start_datetime.astimezone(utc)
-        end_utc = end_datetime.astimezone(utc)
-
-        # Filter data based on the timestamp range
-        cursor.execute(
-            "SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data WHERE timestamp BETWEEN %s AND %s", (start_utc, end_utc))
-    else:
-        # Otherwise, fetch all data
-        cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
-
-    sensor_data = cursor.fetchall()
-    cursor.close()
-    db_connection.close()
-    return jsonify(sensor_data)
-
 #Smartdoor
 @app.route('/door_data')
 def sensor_data3():
@@ -551,7 +629,44 @@ def sensor_data3():
     db_connection.close()
     return jsonify(sensor_data)
 
-#Smartband
+#Environment
+@app.route('/environment_data')
+def sensor_data2():
+    start_timestamp = request.args.get('start_timestamp')
+    end_timestamp = request.args.get('end_timestamp')
+
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+
+    if start_timestamp and end_timestamp:
+        # Convert start and end timestamps to datetime objects
+        start_datetime = datetime.fromisoformat(start_timestamp)
+        end_datetime = datetime.fromisoformat(end_timestamp)
+
+        # Convert start and end datetime objects to UTC
+        start_utc = start_datetime.astimezone(utc)
+        end_utc = end_datetime.astimezone(utc)
+
+        # Filter data based on the timestamp range
+        cursor.execute(
+            "SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data WHERE timestamp BETWEEN %s AND %s", (start_utc, end_utc))
+    else:
+        # Otherwise, fetch all data
+        cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
+
+    sensor_data = cursor.fetchall()
+    cursor.close()
+    db_connection.close()
+    return jsonify(sensor_data)
+
+@app.route('/environment')
+def environment():
+    temperature_data = fetch_temperature_data()
+    gas_data = fetch_gas_data()
+    location_data = fetch_location_data()
+    return render_template('environment.html', temperature_data=temperature_data, gas_data=gas_data, location_data=location_data)
+
+
 def fetch_data_by_timestamp(timestamp):
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)

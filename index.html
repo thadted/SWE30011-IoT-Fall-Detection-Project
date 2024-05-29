@@ -134,23 +134,26 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="col-md-4">
                     <div class="card node-card">
-                        <h2>Environment</h2>
-                        <div class="row">
-
+                        <h2 class="text-center">Home Environment <i class="fas fa-shield-halved"></i></h2>
+                        <div class="row justify-content-center">
                             <div class="thumbnail col-md-6">
-                                <img src="static/smartband.png" alt="smartband">
-                            </div>
-                            <div class="col-md-4">
-                                <p>Battery: 10%</p>
-                                <p>Heart Rate: 90</p>
-                                <p>SpO2 Level: 90</p>
+                                <img style="height: min-content;" src="static/shield.png" alt="safety">
                             </div>
                         </div>
+                        <div class="d-flex justify-content-center mt-4 ml-3">
+                            <button class="btn btn-secondary">
+                                <a href="{{ url_for('environment') }}">Details</a>
+                            </button>
+                        </div>
+                        <br>
+                        <br>
+                        <br>
                     </div>
-
                 </div>
+
                 <div class="col-md-4">
                     <div class="card node-card">
                         <h2>Smart Door</h2>
@@ -170,8 +173,9 @@
                     </div>
                 </div>
             </div>
-
         </div>
+
+    </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script>
