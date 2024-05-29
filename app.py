@@ -730,7 +730,7 @@ def sensor_data3():
 
 #Environment
 @app.route('/environment_data')
-def sensor_data2():
+def environment_data():
     start_timestamp = request.args.get('start_timestamp')
     end_timestamp = request.args.get('end_timestamp')
 
@@ -743,20 +743,48 @@ def sensor_data2():
         end_datetime = datetime.fromisoformat(end_timestamp)
 
         # Convert start and end datetime objects to UTC
-        start_utc = start_datetime.astimezone(utc)
-        end_utc = end_datetime.astimezone(utc)
+        start_utc = start_datetime.astimezone()
+        end_utc = end_datetime.astimezone()
 
-        # Filter data based on the timestamp range
+        # Fetch temperature data within the timestamp range
         cursor.execute(
-            "SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data WHERE timestamp BETWEEN %s AND %s", (start_utc, end_utc))
-    else:
-        # Otherwise, fetch all data
-        cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
+            "SELECT temperature, timestamp FROM temperature_data WHERE timestamp BETWEEN %s AND %s",
+            (start_utc, end_utc)
+        )
+        temperature_data = cursor.fetchall()
 
-    sensor_data = cursor.fetchall()
+        # Fetch gas data within the timestamp range
+        cursor.execute(
+            "SELECT gas_value, timestamp FROM gas_data WHERE timestamp BETWEEN %s AND %s",
+            (start_utc, end_utc)
+        )
+        gas_data = cursor.fetchall()
+    else:
+        # Fetch all temperature data
+        cursor.execute("SELECT temperature, timestamp FROM temperature_data")
+        temperature_data = cursor.fetchall()
+
+        # Fetch all gas data
+        cursor.execute("SELECT gas_value, timestamp FROM gas_data")
+        gas_data = cursor.fetchall()
+
     cursor.close()
     db_connection.close()
-    return jsonify(sensor_data)
+
+    # Combine temperature and gas data
+    combined_data = []
+    temp_dict = {entry['timestamp']: entry['temperature'] for entry in temperature_data}
+    gas_dict = {entry['timestamp']: entry['gas_value'] for entry in gas_data}
+
+    all_timestamps = set(temp_dict.keys()).union(gas_dict.keys())
+    for timestamp in sorted(all_timestamps):
+        combined_data.append({
+            'timestamp': timestamp,
+            'temperature': temp_dict.get(timestamp),
+            'gas_value': gas_dict.get(timestamp)
+        })
+
+    return jsonify(combined_data)
 
 @app.route('/environment')
 def environment():

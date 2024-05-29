@@ -120,28 +120,26 @@
                 </div>
 
                 <!-- Environment -->
-                <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
-
-                    <div class="tab-pane fade show active" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+                <div class="tab-pane fade" id="pills-environment" role="tabpanel" aria-labelledby="pills-profile-tab">
+                    <div class="tab-pane fade show active" id="pills-environment-tab" role="tabpanel"
+                        aria-labelledby="pills-profile-tab">
                         <div class="form-group">
                             <label for="dateFilter2">Filter by Date:</label>
                             <input type="date" id="dateFilter2" class="form-control">
                         </div>
-                        <div id="sensor_data_container" class="table-responsive">
+                        <div id="environment_data_container" class="table-responsive">
                             <table class="table table-striped">
                                 <thead>
                                     <tr>
                                         <th>Date</th>
                                         <th>Time</th>
-                                        <th>Amp</th>
-                                        <th>Heart Rate</th>
-                                        <th>SpO2</th>
-                                        <th>LDR Value</th>
+                                        <th>Temperature</th>
+                                        <th>Gas Value</th>
                                     </tr>
                                 </thead>
                                 <tbody id="environment_data_body"></tbody>
                                 <nav aria-label="Page navigation example">
-                                    <ul class="pagination justify-content-center" id="pagination"></ul>
+                                    <ul class="pagination justify-content-center" id="pagination2"></ul>
                                 </nav>
                             </table>
                         </div>
@@ -151,7 +149,7 @@
                             <h3 class="text-center">Historical Data Graphs</h3>
                             <div class="row">
                                 <div class="col-md-12" width="900" height="600">
-                                    <canvas id="ampChart"></canvas>
+                                    <canvas id="environmentChart"></canvas> <!-- Chart container -->
                                 </div>
                             </div>
                         </div>
@@ -161,7 +159,8 @@
                 <!-- SmartDoor -->
                 <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
 
-                    <div class="tab-pane fade show active" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
+                    <div class="tab-pane fade show active" id="pills-contact" role="tabpanel"
+                        aria-labelledby="pills-contact-tab">
                         <div class="form-group">
                             <label for="dateFilter3">Filter by Date:</label>
                             <input type="date" id="dateFilter3" class="form-control">
@@ -339,11 +338,9 @@
                         const formattedDateTime = formatDateTime(entry.timestamp);
                         const row = document.createElement('tr');
                         row.innerHTML = `<td>${formattedDateTime.date}</td>
-                                 <td>${formattedDateTime.time}</td>
-                                 <td>${entry.amp}</td>
-                                 <td>${entry.hr}</td>
-                                 <td>${entry.spo2}</td>
-                                 <td>${entry.ldr}</td>`;
+                                    <td>${formattedDateTime.time}</td>
+                                    <td>${entry.temperature}</td>
+                                    <td>${entry.gas}</td>`
                         sensorDataBody.appendChild(row);
                     });
 
@@ -558,36 +555,189 @@
         });
 
         // Environment
-        // document.addEventListener('DOMContentLoaded', () => {
-        //     document.getElementById('dateFilter2').addEventListener('change', function () {
-        //         const selectedDate = this.value;
-        //         const startTimestamp = new Date(selectedDate).toISOString();
-        //         const nextDay = new Date(selectedDate);
-        //         nextDay.setDate(nextDay.getDate() + 1);
-        //         const endTimestamp = nextDay.toISOString();
-        //         fetch(`/environment_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
-        //             .then(response => response.json())
-        //             .then(data => {
-        //                 const sensorDataBody = document.getElementById('environment_data_body');
-        //                 sensorDataBody.innerHTML = '';
-        //                 data.forEach(entry => {
-        //                     const formattedDateTime = formatDateTime(entry.timestamp);
-        //                     const row = document.createElement('tr');
-        //                     row.innerHTML = `<td>${formattedDateTime.date}</td>
-        //                              <td>${formattedDateTime.time}</td>
-        //                              <td>${entry.amp}</td>
-        //                              <td>${entry.hr}</td>
-        //                              <td>${entry.spo2}</td>
-        //                              <td>${entry.ldr}</td>`;
-        //                     sensorDataBody.appendChild(row);
-        //                 });
-        //             })
-        //             .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
-        //     });
-        // });
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchEnvironmentData();
 
-            // Smartdoor
-            document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('dateFilter2').addEventListener('change', function () {
+                const selectedDate = this.value;
+                const startTimestamp = new Date(selectedDate).toISOString();
+                const nextDay = new Date(selectedDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const endTimestamp = nextDay.toISOString();
+
+                fetch(`/environment_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const environmentDataBody = document.getElementById('environment_data_body');
+                        environmentDataBody.innerHTML = '';
+                        data.forEach(entry => {
+                            const formattedDateTime = formatDateTime(entry.timestamp);
+                            const row = document.createElement('tr');
+                            row.innerHTML = `<td>${formattedDateTime.date}</td>
+                                     <td>${formattedDateTime.time}</td>
+                                     <td>${entry.temperature}</td>
+                                     <td>${entry.gas_value}</td>`;
+                            environmentDataBody.appendChild(row);
+                        });
+                        renderChart(data);
+                    })
+                    .catch(error => console.error('Error filtering environment data by timestamp range:', error));
+            });
+        });
+
+        function formatDateTime(timestamp) {
+            const date = new Date(timestamp);
+            const formattedDate = date.toISOString().split('T')[0];
+            const formattedTime = date.toTimeString().split(' ')[0];
+            return { date: formattedDate, time: formattedTime };
+        }
+
+        function fetchEnvironmentData(page = 1) {
+            fetch('/environment_data')
+                .then(response => response.json())
+                .then(data => {
+                    const rowsPerPage = 20;
+                    displayDataWithPagination(data, page, rowsPerPage);
+                    renderChart(data);
+                })
+                .catch(error => console.error('Error fetching environment data:', error));
+        }
+
+        function displayDataWithPagination(data, page, rowsPerPage) {
+            const sensorDataBody = document.getElementById('environment_data_body');
+            sensorDataBody.innerHTML = '';
+
+            // Calculate pagination details
+            const totalRows = data.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            // Display rows for the current page
+            data.slice(start, end).forEach(entry => {
+                const formattedDateTime = formatDateTime(entry.timestamp);
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${formattedDateTime.date}</td>
+                         <td>${formattedDateTime.time}</td>
+                         <td>${entry.temperature}</td>
+                         <td>${entry.gas_value}</td>`;
+                sensorDataBody.appendChild(row);
+            });
+
+            // Update pagination
+            const pagination = document.getElementById('pagination2');
+            pagination.innerHTML = '';
+            const maxVisiblePages = 5; // Maximum number of pages to display
+            let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            if (totalPages > maxVisiblePages && startPage > 1) {
+                const liFirst = document.createElement('li');
+                liFirst.className = 'page-item';
+                const aFirst = document.createElement('a');
+                aFirst.className = 'page-link';
+                aFirst.href = '#';
+                aFirst.innerText = '1';
+                aFirst.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    fetchEnvironmentData(1);
+                });
+                liFirst.appendChild(aFirst);
+                pagination.appendChild(liFirst);
+
+                const liEllipsis = document.createElement('li');
+                liEllipsis.className = 'page-item disabled';
+                const aEllipsis = document.createElement('a');
+                aEllipsis.className = 'page-link';
+                aEllipsis.href = '#';
+                aEllipsis.innerText = '...';
+                liEllipsis.appendChild(aEllipsis);
+                pagination.appendChild(liEllipsis);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === page ? 'active' : ''}`;
+                const a = document.createElement('a');
+                a.className = 'page-link';
+                a.href = '#';
+                a.innerText = i;
+                a.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    fetchEnvironmentData(i);
+                });
+                li.appendChild(a);
+                pagination.appendChild(li);
+            }
+
+            if (totalPages > maxVisiblePages && endPage < totalPages) {
+                const liEllipsis = document.createElement('li');
+                liEllipsis.className = 'page-item disabled';
+                const aEllipsis = document.createElement('a');
+                aEllipsis.className = 'page-link';
+                aEllipsis.href = '#';
+                aEllipsis.innerText = '...';
+                liEllipsis.appendChild(aEllipsis);
+                pagination.appendChild(liEllipsis);
+
+                const liLast = document.createElement('li');
+                liLast.className = 'page-item';
+                const aLast = document.createElement('a');
+                aLast.className = 'page-link';
+                aLast.href = '#';
+                aLast.innerText = totalPages;
+                aLast.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    fetchEnvironmentData(totalPages);
+                });
+                liLast.appendChild(aLast);
+                pagination.appendChild(liLast);
+            }
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('environmentChart').getContext('2d');
+            const labels = data.map(entry => new Date(entry.timestamp).toLocaleTimeString());
+            const temperatures = data.map(entry => entry.temperature);
+            const gasValues = data.map(entry => entry.gas_value);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Temperature',
+                            data: temperatures,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            fill: false
+                        },
+                        {
+                            label: 'Gas Value',
+                            data: gasValues,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { display: true, title: { display: true, text: 'Time' } },
+                        y: { display: true, title: { display: true, text: 'Values' } }
+                    }
+                }
+            });
+        }
+
+        // Smartdoor
+        document.addEventListener('DOMContentLoaded', () => {
             fetchDoorData();
 
             document.getElementById('dateFilter3').addEventListener('change', function () {
@@ -694,7 +844,7 @@
             const nextDay = new Date(selectedDate);
             nextDay.setDate(nextDay.getDate() + 1);
             const endTimestamp = nextDay.toISOString();
-            
+
             // Destroy existing chart instance if it exists
             const existingChart = Chart.getChart('ampChart');
             if (existingChart) {
@@ -896,7 +1046,7 @@
             // fetchEnvironmentDataAndFillTable(today);
             // fetchEnvironmentDataAndPlotGraph(today);
         });
-        
+
     </script>
 </body>
 
@@ -908,7 +1058,7 @@
 
     <!-- SmartBand -->
     <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
-       
+
     </div>
 
     <!-- Environment -->
@@ -920,6 +1070,6 @@
     <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
 
     </div>
-    
+
 </div>
- -->
+-->
