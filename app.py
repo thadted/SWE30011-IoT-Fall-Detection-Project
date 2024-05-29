@@ -650,13 +650,23 @@ def get_actuator_status():
 def history():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
+    
+    # Fetching sensor data
     cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
     sensor_data = cursor.fetchall()
-    cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
-    environment_data = cursor.fetchall()
+    
+    # Fetching environment data (assuming temperature and gas values)
+    cursor.execute("SELECT temperature, timestamp FROM temperature_data")
+    temperature_data = cursor.fetchall()
+    
+    cursor.execute("SELECT gas_value, timestamp FROM gas_data")
+    gas_data = cursor.fetchall()
+    
+    # Fetching RFID data
     cursor.execute("SELECT rfid, message, timestamp FROM access_logs")
     rfid_data = cursor.fetchall()
-    return render_template('history.html', sensor_data=sensor_data, environment_data = environment_data, rfid_data = rfid_data)
+    
+    return render_template('history.html', sensor_data=sensor_data, temperature_data=temperature_data, gas_data=gas_data, rfid_data=rfid_data)
 
 #Smartband
 @app.route('/sensor_data')
