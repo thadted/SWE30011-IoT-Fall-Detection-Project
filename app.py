@@ -650,10 +650,13 @@ def get_actuator_status():
 def history():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
+    
     cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
     sensor_data = cursor.fetchall()
+
     cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
     environment_data = cursor.fetchall()
+
     cursor.execute("SELECT rfid, message, timestamp FROM access_logs")
     rfid_data = cursor.fetchall()
     return render_template('history.html', sensor_data=sensor_data, environment_data = environment_data, rfid_data = rfid_data)
