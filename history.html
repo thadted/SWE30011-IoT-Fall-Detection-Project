@@ -566,35 +566,33 @@
         });
 
         // Environment
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchSensorData();
-
-            document.getElementById('dateFilter2').addEventListener('change', function () {
-                const selectedDate = this.value;
-                const startTimestamp = new Date(selectedDate).toISOString();
-                const nextDay = new Date(selectedDate);
-                nextDay.setDate(nextDay.getDate() + 1);
-                const endTimestamp = nextDay.toISOString();
-                fetch(`/environment_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const sensorDataBody = document.getElementById('environment_data_body');
-                        sensorDataBody.innerHTML = '';
-                        data.forEach(entry => {
-                            const formattedDateTime = formatDateTime(entry.timestamp);
-                            const row = document.createElement('tr');
-                            row.innerHTML = `<td>${formattedDateTime.date}</td>
-                                     <td>${formattedDateTime.time}</td>
-                                     <td>${entry.amp}</td>
-                                     <td>${entry.hr}</td>
-                                     <td>${entry.spo2}</td>
-                                     <td>${entry.ldr}</td>`;
-                            sensorDataBody.appendChild(row);
-                        });
-                    })
-                    .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
-            });
-        });
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     document.getElementById('dateFilter2').addEventListener('change', function () {
+        //         const selectedDate = this.value;
+        //         const startTimestamp = new Date(selectedDate).toISOString();
+        //         const nextDay = new Date(selectedDate);
+        //         nextDay.setDate(nextDay.getDate() + 1);
+        //         const endTimestamp = nextDay.toISOString();
+        //         fetch(`/environment_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+        //             .then(response => response.json())
+        //             .then(data => {
+        //                 const sensorDataBody = document.getElementById('environment_data_body');
+        //                 sensorDataBody.innerHTML = '';
+        //                 data.forEach(entry => {
+        //                     const formattedDateTime = formatDateTime(entry.timestamp);
+        //                     const row = document.createElement('tr');
+        //                     row.innerHTML = `<td>${formattedDateTime.date}</td>
+        //                              <td>${formattedDateTime.time}</td>
+        //                              <td>${entry.amp}</td>
+        //                              <td>${entry.hr}</td>
+        //                              <td>${entry.spo2}</td>
+        //                              <td>${entry.ldr}</td>`;
+        //                     sensorDataBody.appendChild(row);
+        //                 });
+        //             })
+        //             .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
+        //     });
+        // });
 
             // Smartdoor
             document.addEventListener('DOMContentLoaded', () => {
@@ -704,20 +702,21 @@
             const nextDay = new Date(selectedDate);
             nextDay.setDate(nextDay.getDate() + 1);
             const endTimestamp = nextDay.toISOString();
-
+            
             // Destroy existing chart instance if it exists
             const existingChart = Chart.getChart('ampChart');
             if (existingChart) {
                 existingChart.destroy();
             }
 
-            fetch(`/amp_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
+            fetch(`/sensor_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
                 .then(response => response.json())
                 .then(data => {
                     const timestamps = data.map(entry => formatDateTime(entry.timestamp));
                     const dateTimeLabels = timestamps.map(entry => `${entry.date} ${entry.time}`);
-                    const hrValues = data.map(entry => entry.heart_rate);
+                    const hrValues = data.map(entry => entry.hr);
                     const spo2Values = data.map(entry => entry.spo2);
+                    const ampValues = data.map(entry => entry.amp);
 
                     const ctx = document.getElementById('ampChart').getContext('2d');
                     new Chart(ctx, {
@@ -725,6 +724,13 @@
                         data: {
                             labels: dateTimeLabels,
                             datasets: [
+                                {
+                                    label: 'Amplitude',
+                                    data: ampValues,
+                                    fill: false,
+                                    borderColor: 'rgb(75, 192, 192)',
+                                    tension: 0.1
+                                },
                                 {
                                     label: 'Heart Rate',
                                     data: hrValues,
@@ -840,7 +846,7 @@
             fetch(`/environment_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
                 .then(response => response.json())
                 .then(data => {
-                    const tbody = document.getElementById('sensor_data_body');
+                    const tbody = document.getElementById('sensor_data_body1');
                     tbody.innerHTML = ''; // Clear existing rows
                     const totalRows = data.length;
                     const totalPages = Math.ceil(totalRows / rowsPerPage);
@@ -884,22 +890,21 @@
                 fetchEnvironmentDataAndPlotGraph(selectedDate);
             });
 
-            const dateFilterEnv = document.getElementById('dateFilterEnv');
+            /*const dateFilterEnv = document.getElementById('dateFilterEnv');
             dateFilterEnv.addEventListener('change', function () {
                 const selectedDate = dateFilterEnv.value;
                 fetchEnvironmentDataAndFillTable(selectedDate);
                 fetchEnvironmentDataAndPlotGraph(selectedDate);
-            });
+            });*/
 
-            // Initial load with default date (optional, you can choose any default date)
             const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
             dateFilter.value = today;
-            fetchAmpDataAndPlotGraph(today);
-
-            dateFilterEnv.value = today;
-            fetchEnvironmentDataAndFillTable(today);
-            fetchEnvironmentDataAndPlotGraph(today);
+            fetchAmpDataAndPlotGraph1();
+            // dateFilterEnv.value = today;
+            // fetchEnvironmentDataAndFillTable(today);
+            // fetchEnvironmentDataAndPlotGraph(today);
         });
+        
     </script>
 </body>
 
