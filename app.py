@@ -413,7 +413,7 @@ def insights():
     # Render the insights template with the activity metrics, activity data, and recommendations
     return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations)
 
-
+#Smartband
 @app.route('/get_thresholds')
 def get_thresholds():
     thresholds = fetch_thresholds()
@@ -448,6 +448,7 @@ def get_actuator_status():
     db_connection.close()
     return jsonify({'buzzer_state': bool(buzzer_state), 'led_state': led_state})
 
+#All
 @app.route('/history')
 def history():
     db_connection = connect_to_database()
