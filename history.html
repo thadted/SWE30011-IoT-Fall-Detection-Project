@@ -124,8 +124,8 @@
 
                     <div class="tab-pane fade show active" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
                         <div class="form-group">
-                            <label for="dateFilter">Filter by Date:</label>
-                            <input type="date" id="dateFilter" class="form-control">
+                            <label for="dateFilter2">Filter by Date:</label>
+                            <input type="date" id="dateFilter2" class="form-control">
                         </div>
                         <div id="sensor_data_container" class="table-responsive">
                             <table class="table table-striped">
@@ -163,8 +163,8 @@
 
                     <div class="tab-pane fade show active" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
                         <div class="form-group">
-                            <label for="dateFilter">Filter by Date:</label>
-                            <input type="date" id="dateFilter" class="form-control">
+                            <label for="dateFilter3">Filter by Date:</label>
+                            <input type="date" id="dateFilter3" class="form-control">
                         </div>
                         <div id="sensor_data_container" class="table-responsive">
                             <table class="table table-striped">
@@ -569,7 +569,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             fetchSensorData();
 
-            document.getElementById('dateFilter').addEventListener('change', function () {
+            document.getElementById('dateFilter2').addEventListener('change', function () {
                 const selectedDate = this.value;
                 const startTimestamp = new Date(selectedDate).toISOString();
                 const nextDay = new Date(selectedDate);
@@ -600,7 +600,7 @@
             document.addEventListener('DOMContentLoaded', () => {
             fetchDoorData();
 
-            document.getElementById('dateFilter').addEventListener('change', function () {
+            document.getElementById('dateFilter3').addEventListener('change', function () {
                 const selectedDate = this.value;
                 const startTimestamp = new Date(selectedDate).toISOString();
                 const nextDay = new Date(selectedDate);
