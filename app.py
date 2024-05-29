@@ -519,7 +519,20 @@ def insights():
     # Render the insights template with the activity metrics, activity data, and recommendations
     return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations)
 
+#Smartband
 @app.route('/get_thresholds')
+def get_thresholds():
+    thresholds = fetch_thresholds()
+    return jsonify(thresholds)
+
+#Environment
+@app.route('/get_thresholds_environment')
+def get_thresholds():
+    thresholds = fetch_thresholds()
+    return jsonify(thresholds)
+
+#Smartdoor
+@app.route('/get_thresholds_door')
 def get_thresholds():
     thresholds = fetch_thresholds()
     return jsonify(thresholds)
@@ -527,8 +540,32 @@ def get_thresholds():
 
 check_movement()
 
-
+#Smartband
 @app.route('/save_threshold', methods=['POST'])
+def save_threshold_route():
+    try:
+        name = request.form['name']
+        value = request.form['value']
+        save_threshold(name, value)
+        return 'Threshold value saved successfully'
+    except Exception as e:
+        # Return the error message with status code 500 (Internal Server Error)
+        return str(e), 500
+
+#Environment
+@app.route('/save_threshold', methods=['POST'])
+def save_threshold_route():
+    try:
+        name = request.form['name']
+        value = request.form['value']
+        save_threshold(name, value)
+        return 'Threshold value saved successfully'
+    except Exception as e:
+        # Return the error message with status code 500 (Internal Server Error)
+        return str(e), 500
+    
+#Smartdoor
+@app.route('/save_threshold_door', methods=['POST'])
 def save_threshold_route():
     try:
         name = request.form['name']
@@ -666,7 +703,7 @@ def environment():
     location_data = fetch_location_data()
     return render_template('environment.html', temperature_data=temperature_data, gas_data=gas_data, location_data=location_data)
 
-
+#Smartband
 def fetch_data_by_timestamp(timestamp):
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)
