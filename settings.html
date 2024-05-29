@@ -7,7 +7,7 @@
     <title>Threshold Settings</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="main.css" rel="stylesheet">
+    <link href="static/main.css" rel="stylesheet">
 </head>
 
 <body>
@@ -328,8 +328,8 @@
                                     <div class="form-group row">
                                         <div class="col-md-8">
                                             <select class="form-control" id="Activation_door" name="Activation_door">
-                                                 <option value="0">Off</option>
-                                                <option value="1">On</option>
+                                                 <option value="Closed">Off</option>
+                                                <option value="Open">On</option>
                                             </select>
                                         </div>
                                     <div class="col-md-3 d-flex align-items-center justify-content-center">
@@ -345,9 +345,8 @@
                                 <div class="form-group row">
                                     <div class="col-md-8">
                                         <select class="form-control" id="ledActivation_door" name="ledActivation_door">
-                                            <option value="0">Off</option>
-                                            <option value="1">On</option>
-                                            <option value="2">Auto</option>
+                                            <option value="Closed">Off</option>
+                                            <option value="Open">On</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 d-flex align-items-center justify-content-center">
@@ -394,6 +393,9 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
     <script>
         $(document).ready(function () {
             // Function to fetch and display current threshold values
@@ -449,8 +451,8 @@
                 fetch('/get_thresholds_door')
                     .then(response => response.json())
                     .then(data => {
-                        $('#ledActivation_door').val(data.low_hr);
-                        $('#Activation_door').val(data.low_spo2);
+                        $('#ledActivation_door').val(data.led_status);
+                        $('#Activation_door').val(data.door_status);
                     });
             }
 
@@ -524,13 +526,13 @@
             //Led Activate for door
             $('#saveLedActivation_door').click(function () {
                 var ledState = $('#ledActivation_door').val();
-                saveThreshold_door('ledActivation_door', ledState);
+                saveThreshold_door('led_status', ledState);
             });
 
             //door Activate
-            $('#saveLedActivation_door').click(function () {
+            $('#saveActivation_door').click(function () {
                 var ledState = $('#Activation_door').val();
-                saveThreshold_door('Activation_door', ledState);
+                saveThreshold_door('door_status', ledState);
             });
 
             // Function to save threshold value

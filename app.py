@@ -108,6 +108,14 @@ def fetch_thresholds():
     cursor.close()
     return thresholds
 
+def fetch_thresholds_door():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM status_logs")
+    thresholds = cursor.fetchone()
+    cursor.close()
+    return thresholds
+    
 # # Function to save threshold value
 
 
@@ -133,6 +141,50 @@ def save_threshold(name, value):
 
     return 'Threshold value saved successfully'
 
+def save_threshold_environment(name, value):
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+
+    # Update the threshold value
+    cursor.execute(f"UPDATE settings SET {name} = %s", (value,))
+
+    # Fetch the current version number
+    cursor.execute(
+        "SELECT version FROM settings ORDER BY version DESC LIMIT 1")
+    current_version = cursor.fetchone()[0]
+    new_version = current_version + 1
+
+    # Update the version number
+    cursor.execute("UPDATE settings SET version = %s", (new_version,))
+
+    db_connection.commit()
+    cursor.close()
+    db_connection.close()
+
+    return 'Threshold value saved successfully'
+
+
+def save_threshold_door(name, value):
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+
+    # Update the threshold value
+    cursor.execute(f"UPDATE status_logs SET {name} = %s", (value,))
+
+    # Fetch the current version number
+    cursor.execute(
+        "SELECT version FROM status_logs ORDER BY version DESC LIMIT 1")
+    current_version = cursor.fetchone()[0]
+    new_version = current_version + 1
+
+    # Update the version number
+    cursor.execute("UPDATE status_logs SET version = %s", (new_version,))
+
+    db_connection.commit()
+    cursor.close()
+    db_connection.close()
+
+    return 'Threshold value saved successfully'
 
 def fetch_previous_status():
     db_connection = connect_to_database()
@@ -527,14 +579,14 @@ def get_thresholds():
 
 #Environment
 @app.route('/get_thresholds_environment')
-def get_thresholds():
+def get_thresholds_environment():
     thresholds = fetch_thresholds()
     return jsonify(thresholds)
 
 #Smartdoor
 @app.route('/get_thresholds_door')
-def get_thresholds():
-    thresholds = fetch_thresholds()
+def get_thresholds_door():
+    thresholds = fetch_thresholds_door()
     return jsonify(thresholds)
 
 
@@ -553,12 +605,12 @@ def save_threshold_route():
         return str(e), 500
 
 #Environment
-@app.route('/save_threshold', methods=['POST'])
-def save_threshold_route():
+@app.route('/save_threshold_environment', methods=['POST'])
+def save_threshold_route_environment():
     try:
         name = request.form['name']
         value = request.form['value']
-        save_threshold(name, value)
+        save_threshold_environment(name, value)
         return 'Threshold value saved successfully'
     except Exception as e:
         # Return the error message with status code 500 (Internal Server Error)
@@ -566,11 +618,11 @@ def save_threshold_route():
     
 #Smartdoor
 @app.route('/save_threshold_door', methods=['POST'])
-def save_threshold_route():
+def save_threshold_route_door():
     try:
         name = request.form['name']
         value = request.form['value']
-        save_threshold(name, value)
+        save_threshold_door(name, value)
         return 'Threshold value saved successfully'
     except Exception as e:
         # Return the error message with status code 500 (Internal Server Error)
