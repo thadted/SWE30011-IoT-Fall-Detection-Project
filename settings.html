@@ -324,12 +324,12 @@
 
                             <!-- Form Door -->
                             <form id="manualSettingsForm" class="center">
-                                    <label for="Activation_door">Activate RFID:</label>
+                                    <label for="Activation_door">Activate Door:</label>
                                     <div class="form-group row">
                                         <div class="col-md-8">
                                             <select class="form-control" id="Activation_door" name="Activation_door">
-                                                 <option value="0">Off</option>
-                                                <option value="1">On</option>
+                                                 <option value="Closed">Off</option>
+                                                <option value="Open">On</option>
                                             </select>
                                         </div>
                                     <div class="col-md-3 d-flex align-items-center justify-content-center">
@@ -345,9 +345,8 @@
                                 <div class="form-group row">
                                     <div class="col-md-8">
                                         <select class="form-control" id="ledActivation_door" name="ledActivation_door">
-                                            <option value="0">Off</option>
-                                            <option value="1">On</option>
-                                            <option value="2">Auto</option>
+                                            <option value="Closed">Off</option>
+                                            <option value="Open">On</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 d-flex align-items-center justify-content-center">
@@ -377,10 +376,10 @@
                                 <label for="door_delay">Adjust Delay For Door:</label>
                                 <div class="form-group row">
                                     <div class="col-md-8">
-                                        <input type="text" class="form-control" id="RFIDActivation_door" name="RFIDActivation_door" placeholder="Enter value">
+                                        <input type="text" class="form-control" id="Delay_door" name="Delay_door" placeholder="Enter value">
                                     </div>
                                     <div class="col-md-3 d-flex align-items-center justify-content-center">
-                                        <button type="button" class="btn btn-primary" id="saveRFIDActivation_door">Save</button>
+                                        <button type="button" class="btn btn-primary" id="saveDelayActivation_door">Save</button>
                                     </div>
                                 </div>
                             </form>
@@ -394,8 +393,9 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
     <script>
         $(document).ready(function () {
             // Function to fetch and display current threshold values
@@ -422,8 +422,44 @@
                     });
             }
 
+            //Environment
+            function fetchThresholds_environment() {
+                fetch('/get_thresholds_environment')
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#lowHr').val(data.low_hr);
+                        $('#lowSpo2').val(data.low_spo2);
+                        $('#fallThreshold').val(data.fall_threshold);
+                        $('#fallCheckDuration').val(data.fall_check_duration);
+                        $('#fallChangeThreshold').val(data.fall_change_threshold);
+                        $('#highSpO2').val(data.high_spo2);
+                        $('#spo2UnusualMaxTime').val(data.spo2_unusual_max_time);
+                        $('#highHr').val(data.high_hr);
+                        $('#heartRateUnusualMaxTime').val(data.heart_rate_unusual_max_time);
+                        $('#lowLdr').val(data.low_ldr);
+
+                        // Update Buzzer activation state
+                        $('#buzzerActivation').val(data.buzzer_activation);
+
+                        // Update LED activation state
+                        $('#ledActivation').val(data.led_activation);
+                    });
+            }
+
+            //Smartdoor
+            function fetchThresholds_door() {
+                fetch('/get_thresholds_door')
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#ledActivation_door').val(data.led_status);
+                        $('#Activation_door').val(data.door_status);
+                    });
+            }
+
             // Fetch and display current threshold values on page load
             fetchThresholds();
+            fetchThresholds_environment();
+            fetchThresholds_door();
 
             // Save Low HR Threshold
             $('#saveLowHr').click(function () {
@@ -487,11 +523,79 @@
                 saveThreshold('led_activation', ledState);
             });
 
+            //Led Activate for door
+            $('#saveLedActivation_door').click(function () {
+                var ledState = $('#ledActivation_door').val();
+                saveThreshold_door('led_status', ledState);
+            });
+
+            //door Activate
+            $('#saveActivation_door').click(function () {
+                var ledState = $('#Activation_door').val();
+                saveThreshold_door('door_status', ledState);
+            });
+
             // Function to save threshold value
             function saveThreshold(name, value) {
                 $.ajax({
                     type: 'POST',
                     url: '/save_threshold',
+                    data: {
+                        name: name,
+                        value: value
+                    },
+                    success: function () {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Value changed successfully!.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    error: function () {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to save value.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+
+            //Environment
+            function saveThreshold_environment(name, value) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/save_threshold',
+                    data: {
+                        name: name,
+                        value: value
+                    },
+                    success: function () {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Value changed successfully!.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    error: function () {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to save value.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+
+            //Smartdoor
+            function saveThreshold_door(name, value) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/save_threshold_door',
                     data: {
                         name: name,
                         value: value
