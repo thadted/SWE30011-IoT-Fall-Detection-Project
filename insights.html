@@ -10,6 +10,16 @@
     <link href="static/main.css" rel="stylesheet">
 </head>
 
+<style>
+    .chart-container {
+        width: 500px;
+        /* Adjust the width as needed */
+        height: 500px;
+        /* Adjust the height as needed */
+        margin: auto;
+    }
+</style>
+
 <body>
     <nav class="sidebar">
         <h1 class="text-center"> My Home </h1>
@@ -82,10 +92,13 @@
                 </ul>
             </div>
 
-            <div class="activity-graph-container">
+            <div class="container">
                 <h2>Location Graph (Last 1 hour)</h2>
-                <canvas id="locationChart"></canvas>
+                <div class="chart-container">
+                    <canvas id="locationChart"></canvas>
+                </div>
             </div>
+
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -96,7 +109,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             // Fetch activity data
             fetchActivityData();
-            // Fetch and display location data
+            // Fetch location data
             fetchLocationData();
         });
 
@@ -147,74 +160,92 @@
         }
 
         function fetchLocationData() {
-            fetch('/location_analysis_data')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Location analysis data:', data);
+            // Fetch location data and display in the location bar chart
+            var ctx = document.getElementById('locationChart').getContext('2d');
+            var locationData = {{ formatted_location_data | tojson
+        }};
 
-                    // Check if data is in the expected format
-                    if (!Array.isArray(data)) {
-                        throw new Error('Location analysis data is not in the expected format');
-                    }
+        // Count occurrences of each location type by day and hour
+        var locationCountsByDayHour = {};
+        locationData.forEach(function (data) {
+            var dayHour = moment(data.timestamp).format('YYYY-MM-DD HH:00:00');
+            if (!locationCountsByDayHour[dayHour]) {
+                locationCountsByDayHour[dayHour] = {};
+            }
+            if (locationCountsByDayHour[dayHour][data.location_type]) {
+                locationCountsByDayHour[dayHour][data.location_type]++;
+            } else {
+                locationCountsByDayHour[dayHour][data.location_type] = 1;
+            }
+        });
 
-                    // Proceed with processing the data
-                    const currentTime = new Date();
-                    const currentTimeString = `Current Time: ${currentTime.toLocaleString()}`;
+        // Prepare data for the chart
+        var labels = Object.keys(locationCountsByDayHour);
+        var datasets = [];
 
-                    // Filter data for the last hour
-                    const latestHour = new Date(currentTime.getTime() - (60 * 60 * 1000)); // Timestamp of one hour ago
-                    const filteredData = data.filter(item => new Date(item.timestamp) >= latestHour);
+        // Collect all unique location types for colors and labels
+        var allLocations = Array.from(new Set(locationData.map(function (item) {
+            return item.location_type;
+        })));
 
-                    // Extract timestamps and location types from filtered data
-                    const timestamps = filteredData.map(item => item.timestamp);
-                    const locationTypes = filteredData.map(item => item.location_type);
+        allLocations.forEach(function (location) {
+            var data = labels.map(function (label) {
+                return locationCountsByDayHour[label][location] || 0;
+            });
+            datasets.push({
+                label: location,
+                data: data,
+                backgroundColor: getRandomColor(),
+                borderColor: getRandomColor(),
+                borderWidth: 1
+            });
+        });
 
-                    // Create Chart.js chart with filtered data
-                    const ctx = document.getElementById('locationChart').getContext('2d');
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: timestamps,
-                            datasets: [{
-                                label: 'Location Type',
-                                data: locationTypes,
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                borderWidth: 1,
-                                fill: false
-                            }]
-                        },
-                        options: {
-                            plugins: {
-                                title: {
-                                    display: true,
-                                    text: currentTimeString
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    type: 'time',
-                                    time: {
-                                        displayFormats: {
-                                            hour: 'HH:mm'
-                                        }
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true
-                                }
-                            }
+        var chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Day and Hour'
                         }
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching or processing location analysis data:', error);
-                });
+                    },
+                    y: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Frequency'
+                        }
+                    }
+                },
+                legend: {
+                    position: 'right',
+                },
+                title: {
+                    display: true,
+                    text: 'Most Frequent Location by Hour'
+                }
+            }
+        });
+}
+
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
         }
+
     </script>
 </body>
 
