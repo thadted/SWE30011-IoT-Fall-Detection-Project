@@ -7,7 +7,7 @@
     <title>SmartHome Dashboard</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="static/main.css" rel="stylesheet">
+    <link href="main.css" rel="stylesheet">
 </head>
 
 <style>
@@ -99,6 +99,13 @@
                 </div>
             </div>
 
+            <div class="container">
+                <h2>In and Out Times Graph (Last 1 hour)</h2>
+                <div class="chart-container">
+                    <canvas id="TimeChart"></canvas>
+                </div>
+            </div>
+
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -111,6 +118,8 @@
             fetchActivityData();
             // Fetch location data
             fetchLocationData();
+             // Fetch time data
+            fetchTimeData();
         });
 
         function fetchActivityData() {
@@ -236,6 +245,13 @@
             }
         });
 }
+
+        function fetchTimeData() {
+                // Fetch location data and display in the location bar chart
+                var ctx = document.getElementById('TimeChart').getContext('2d');
+                var locationData = {{ formatted_location_data | tojson
+            }};
+        }
 
         function getRandomColor() {
             var letters = '0123456789ABCDEF';
