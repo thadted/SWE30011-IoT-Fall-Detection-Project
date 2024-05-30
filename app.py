@@ -585,6 +585,44 @@ def generate_recommendations(average_amplitude):
             "Try a new fitness class or activity to keep things interesting.",
             "Maintain regular movement breaks throughout your day."
         ]
+        
+#location analyze
+def analyze_location_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+
+    # Get the start and end timestamps for the analysis
+    end_time = datetime.now()
+    start_time = end_time - timedelta(hours=24)  # Adjust this as needed
+
+    # Initialize a dictionary to store location_type counts for each hour
+    location_counts = {}
+
+    # Query data for each hour interval
+    current_time = start_time
+    while current_time < end_time:
+        next_time = current_time + timedelta(hours=1)
+        cursor.execute(
+            'SELECT location_type, COUNT(*) as count FROM location_data WHERE timestamp >= %s AND timestamp < %s GROUP BY location_type',
+            (current_time, next_time)
+        )
+        data = cursor.fetchall()
+
+        # Find the location_type with the highest count
+        max_count = 0
+        max_location_type = None
+        for row in data:
+            if row['count'] > max_count:
+                max_count = row['count']
+                max_location_type = row['location_type']
+
+        # Store the result for the current hour interval
+        location_counts[current_time.strftime('%Y-%m-%d %H:%M:%S')] = max_location_type
+
+        current_time = next_time
+
+    db_connection.close()
+    return location_counts
 
 
 @app.route('/insights')
@@ -606,8 +644,33 @@ def insights():
         for data in movement_data
     ]
 
-    # Render the insights template with the activity metrics, activity data, and recommendations
-    return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations)
+    # Fetch location analysis data
+    location_counts = analyze_location_data()
+
+    # Render the insights template with the activity metrics, activity data, recommendations, and location analysis data
+    return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations, location_counts=location_counts)
+
+@app.route('/location_analysis_data')
+def location_analysis_data():
+    # Calculate the start time for the last hour
+    start_time = datetime.now() - timedelta(hours=1)
+    
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+
+    # Query data for the last hour
+    cursor.execute(
+        'SELECT location_type, COUNT(*) as count FROM location_data WHERE timestamp >= %s GROUP BY location_type',
+        (start_time,)
+    )
+    data = cursor.fetchall()
+
+    # Construct dictionary of location types and their counts
+    location_counts = {row['location_type']: row['count'] for row in data}
+
+    db_connection.close()
+
+    return jsonify(location_counts)
 
 #Smartband
 @app.route('/get_thresholds')
