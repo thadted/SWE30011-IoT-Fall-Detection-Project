@@ -186,6 +186,25 @@ def save_threshold_door(name, value):
 
     return 'Threshold value saved successfully'
 
+
+def save_rfid(name, value):
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+
+    try:
+        # Insert the RFID value
+        cursor.execute("INSERT INTO rfid_access (uid) VALUES (%s)", (value,))
+        db_connection.commit()
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return 'Failed to save the RFID value'
+    finally:
+        cursor.close()
+        db_connection.close()
+
+    return 'RFID value saved successfully'
+
+
 def fetch_previous_status():
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)
@@ -420,7 +439,26 @@ def get_smartdoor_status():
     else:
         return jsonify({'error': 'No data available'})
 
+@app.route('/get_uids', methods=['GET'])
+def get_uids():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute("SELECT uid FROM rfid_access")
+    uids = cursor.fetchall()
+    cursor.close()
+    db_connection.close()
+    return jsonify(uids)
 
+@app.route('/delete_uid/<uid>', methods=['DELETE'])
+def delete_uid(uid):
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor()
+    cursor.execute("DELETE FROM rfid_access WHERE uid = %s", (uid,))
+    db_connection.commit()
+    cursor.close()
+    db_connection.close()
+    return jsonify({'message': 'UID deleted successfully'})
+    
 @app.route('/settings')
 def settings():
     return render_template('settings.html')
@@ -628,7 +666,17 @@ def save_threshold_route_door():
         # Return the error message with status code 500 (Internal Server Error)
         return str(e), 500
 
-
+@app.route('/save_rfid', methods=['POST'])
+def save_threshold_rfid():
+    try:
+        name = request.form['name']
+        value = request.form['value']
+        save_rfid(name, value)
+        return 'Threshold value saved successfully'
+    except Exception as e:
+        # Return the error message with status code 500 (Internal Server Error)
+        return str(e), 500
+    
 @app.route('/actuator_status')
 def get_actuator_status():
     db_connection = connect_to_database()
@@ -650,7 +698,7 @@ def get_actuator_status():
 def history():
     db_connection = connect_to_database()
     cursor = db_connection.cursor()
-    
+
     # Fetching sensor data
     cursor.execute("SELECT amp, hr, spo2, ldr, timestamp FROM sensor_data")
     sensor_data = cursor.fetchall()

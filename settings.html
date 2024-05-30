@@ -310,35 +310,34 @@
                 <!-- Jason Your Content Go Here -->
 
                 </div>
-
                 <!-- SmartDoor -->
                 <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
-
+                
                     <div class="container mt-4 mb-4">
                         <h1 class="text-center"> Actuators </h1>
-
+                
                         <div class="card col-md-12">
                             <br />
                             <br />
                             <br />
-
+                
                             <!-- Form Door -->
                             <form id="manualSettingsForm" class="center">
-                                    <label for="Activation_door">Activate Door:</label>
-                                    <div class="form-group row">
-                                        <div class="col-md-8">
-                                            <select class="form-control" id="Activation_door" name="Activation_door">
-                                                 <option value="Closed">Off</option>
-                                                <option value="Open">On</option>
-                                            </select>
-                                        </div>
+                                <label for="Activation_door">Activate Door:</label>
+                                <div class="form-group row">
+                                    <div class="col-md-8">
+                                        <select class="form-control" id="Activation_door" name="Activation_door">
+                                            <option value="Closed">Off</option>
+                                            <option value="Open">On</option>
+                                        </select>
+                                    </div>
                                     <div class="col-md-3 d-flex align-items-center justify-content-center">
                                         <button type="button" class="btn btn-primary" id="saveActivation_door">Save</button>
                                     </div>
                                 </div>
                             </form>
                             <br>
-
+                
                             <!-- Form Led -->
                             <form id="manualSettingsForm" class="center">
                                 <label for="ledActivation_door">Activate LED:</label>
@@ -347,6 +346,7 @@
                                         <select class="form-control" id="ledActivation_door" name="ledActivation_door">
                                             <option value="Closed">Off</option>
                                             <option value="Open">On</option>
+                                            <option value="Auto">Auto</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3 d-flex align-items-center justify-content-center">
@@ -355,37 +355,33 @@
                                 </div>
                             </form>
                             <br>
-
+                
                             <!-- Form RFID -->
                             <form id="manualSettingsForm" class="center">
                                 <label for="RFIDActivation_door">Activate RFID:</label>
                                 <div class="form-group row">
                                     <div class="col-md-8">
-                                        <input type="text" class="form-control" id="RFIDActivation_door" name="RFIDActivation_door" placeholder="Enter value">
+                                        <input type="text" class="form-control" id="RFIDActivation_door" name="RFIDActivation_door"
+                                            placeholder="Enter value">
                                     </div>
                                     <div class="col-md-3 d-flex align-items-center justify-content-center">
                                         <button type="button" class="btn btn-primary" id="saveRFIDActivation_door">Save</button>
                                     </div>
                                 </div>
                             </form>
-                            <br />
-                            
-
-                            <!-- Form Delay -->
-                            <form id="manualSettingsForm" class="center">
-                                <label for="door_delay">Adjust Delay For Door:</label>
-                                <div class="form-group row">
-                                    <div class="col-md-8">
-                                        <input type="text" class="form-control" id="Delay_door" name="Delay_door" placeholder="Enter value">
-                                    </div>
-                                    <div class="col-md-3 d-flex align-items-center justify-content-center">
-                                        <button type="button" class="btn btn-primary" id="saveDelayActivation_door">Save</button>
-                                    </div>
-                                </div>
-                            </form>
+                            <br>
+                
+                            <!-- Display Current UIDs -->
+                            <div>
+                                <h3 class = "text-center">Accessible UIDs</h3>
+                                <ul id="uidList" class="list-group">
+                                    <!-- UIDs will be populated here by JavaScript -->
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -397,6 +393,50 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
     <script>
+       document.addEventListener('DOMContentLoaded', function () {
+            // Function to fetch UIDs and populate the list
+            function fetchUIDs() {
+                fetch('/get_uids')
+                    .then(response => response.json())
+                    .then(data => {
+                        const uidList = document.getElementById('uidList');
+                        uidList.innerHTML = ''; // Clear the list before adding new items
+                        data.forEach(uid => {
+                            const listItem = document.createElement('li');
+                            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                            listItem.textContent = uid.uid;
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.className = 'btn btn-danger btn-sm';
+                            deleteButton.textContent = 'Delete';
+                            deleteButton.onclick = function () {
+                                deleteUID(uid.uid);
+                            };
+
+                            listItem.appendChild(deleteButton);
+                            uidList.appendChild(listItem);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching UIDs:', error));
+            }
+
+            // Function to delete a UID
+            function deleteUID(uid) {
+                fetch(`/delete_uid/${uid}`, { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                        fetchUIDs(); // Refresh the list after deletion
+                    })
+                    .catch(error => console.error('Error deleting UID:', error));
+            }
+
+            // Fetch UIDs when the page loads
+            fetchUIDs();
+
+            setInterval(fetchUIDs, 10000);
+        });
+
         $(document).ready(function () {
             // Function to fetch and display current threshold values
             function fetchThresholds() {
@@ -535,6 +575,11 @@
                 saveThreshold_door('door_status', ledState);
             });
 
+            $('#saveRFIDActivation_door').click(function () {
+                var ledState = $('#RFIDActivation_door').val();
+                saveRFID('uid', ledState);
+            });
+
             // Function to save threshold value
             function saveThreshold(name, value) {
                 $.ajax({
@@ -618,7 +663,36 @@
                     }
                 });
             }
+
+            function saveRFID(name, value) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/save_rfid',
+                    data: {
+                        name: name,
+                        value: value
+                    },
+                    success: function () {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Value changed successfully!.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    error: function () {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to save value.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
         });
+
+
     </script>
 
 </body>
