@@ -49,7 +49,7 @@ def send_message(token, chat_id, text):
 
 
 bot_token = '6716374792:AAFjcuTDMuzO5ZGSM2zsWy1gKg4AihLlV54'
-chat_id = '5067176118'
+chat_id = '-4213740719'
 
 
 def fetch_thresholds():
