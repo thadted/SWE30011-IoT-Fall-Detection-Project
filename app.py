@@ -97,6 +97,16 @@ def fetch_location_data():
     db_connection.close()
     return data
 
+#light
+@app.route('/light_status')
+def fetch_light_status():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute('SELECT * FROM LightStatus ORDER BY LastUpdated DESC LIMIT 1')
+    data = cursor.fetchone()
+    db_connection.close()
+    return jsonify(data)
+
 # # Function to fetch threshold settings from the database
 
 
@@ -585,6 +595,16 @@ def generate_recommendations(average_amplitude):
             "Try a new fitness class or activity to keep things interesting.",
             "Maintain regular movement breaks throughout your day."
         ]
+        
+#location analyze
+def get_location_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute(
+        'SELECT * FROM location_data WHERE timestamp >= NOW() - INTERVAL 1 HOUR')
+    data = cursor.fetchall()
+    db_connection.close()
+    return data
 
 
 @app.route('/insights')
@@ -601,13 +621,22 @@ def insights():
 
     # Format data for the graph
     activity_data = [
-        {'timestamp': data['timestamp'].strftime(
-            '%Y-%m-%d %H:%M:%S'), 'amp': data['amp']}
+        {'timestamp': data['timestamp'].strftime('%Y-%m-%d %H:%M:%S'), 'amp': data['amp']}
         for data in movement_data
     ]
 
-    # Render the insights template with the activity metrics, activity data, and recommendations
-    return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations)
+    # Fetch location analysis data
+    location_data = get_location_data()
+
+    # Format location data for the graph
+    formatted_location_data = [
+        {'timestamp': data['timestamp'].strftime('%Y-%m-%d %H:%M:%S'), 'location_type': data['location_type']}
+        for data in location_data
+    ]
+
+    # Render the insights template with the activity metrics, activity data, recommendations, and location analysis data
+    return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations, location_data=location_data, formatted_location_data=formatted_location_data)
+
 
 #Smartband
 @app.route('/get_thresholds')

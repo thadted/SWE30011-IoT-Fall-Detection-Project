@@ -10,6 +10,16 @@
     <link href="static/main.css" rel="stylesheet">
 </head>
 
+<style>
+    .chart-container {
+        width: 500px;
+        /* Adjust the width as needed */
+        height: 500px;
+        /* Adjust the height as needed */
+        margin: auto;
+    }
+</style>
+
 <body>
     <nav class="sidebar">
         <h1 class="text-center"> My Home </h1>
@@ -62,16 +72,17 @@
     </nav>
     <div class="main-content">
         <div class="container">
-            <h1>Activity Insights</h1>
-            <div class="metrics">
+            <h1>Insights</h1>
+            <div class="activity-insights">
                 <h2>Activity Metrics</h2>
                 <p>Average Motion: {{ activity_metrics['average_amplitude'] }}</p>
                 <p>Movement Detected: {{ activity_metrics['movement_detected'] }}</p>
             </div>
-            <div class="graph-container">
+            <div class="activity-graph-container">
                 <h2>Activity Graph (Last 30 Minutes)</h2>
                 <canvas id="activityGraph"></canvas>
             </div>
+
             <div class="recommendations">
                 <h2>Recommendations</h2>
                 <ul>
@@ -80,6 +91,14 @@
                     {% endfor %}
                 </ul>
             </div>
+
+            <div class="container">
+                <h2>Location Graph (Last 1 hour)</h2>
+                <div class="chart-container">
+                    <canvas id="locationChart"></canvas>
+                </div>
+            </div>
+
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -88,10 +107,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var ctx = document.getElementById('activityGraph').getContext('2d');
-            var activityData = {{ activity_data| tojson
-        }};
+            // Fetch activity data
+            fetchActivityData();
+            // Fetch location data
+            fetchLocationData();
+        });
 
+        function fetchActivityData() {
+            // Fetch activity data and display in the activity graph
+            var ctx = document.getElementById('activityGraph').getContext('2d');
+            var activityData = {{ activity_data | tojson
+        }};
         var timestamps = activityData.map(data => moment(data.timestamp));
         var amplitudes = activityData.map(data => data.amp);
 
@@ -131,9 +157,96 @@
                 }
             }
         });
-            });
-    </script>
+        }
 
+        function fetchLocationData() {
+            // Fetch location data and display in the location bar chart
+            var ctx = document.getElementById('locationChart').getContext('2d');
+            var locationData = {{ formatted_location_data | tojson
+        }};
+
+        // Count occurrences of each location type by day and hour
+        var locationCountsByDayHour = {};
+        locationData.forEach(function (data) {
+            var dayHour = moment(data.timestamp).format('YYYY-MM-DD HH:00:00');
+            if (!locationCountsByDayHour[dayHour]) {
+                locationCountsByDayHour[dayHour] = {};
+            }
+            if (locationCountsByDayHour[dayHour][data.location_type]) {
+                locationCountsByDayHour[dayHour][data.location_type]++;
+            } else {
+                locationCountsByDayHour[dayHour][data.location_type] = 1;
+            }
+        });
+
+        // Prepare data for the chart
+        var labels = Object.keys(locationCountsByDayHour);
+        var datasets = [];
+
+        // Collect all unique location types for colors and labels
+        var allLocations = Array.from(new Set(locationData.map(function (item) {
+            return item.location_type;
+        })));
+
+        allLocations.forEach(function (location) {
+            var data = labels.map(function (label) {
+                return locationCountsByDayHour[label][location] || 0;
+            });
+            datasets.push({
+                label: location,
+                data: data,
+                backgroundColor: getRandomColor(),
+                borderColor: getRandomColor(),
+                borderWidth: 1
+            });
+        });
+
+        var chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Day and Hour'
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Frequency'
+                        }
+                    }
+                },
+                legend: {
+                    position: 'right',
+                },
+                title: {
+                    display: true,
+                    text: 'Most Frequent Location by Hour'
+                }
+            }
+        });
+}
+
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+    </script>
 </body>
 
 </html>
