@@ -585,13 +585,6 @@
             });
         });
 
-        function formatDateTime(timestamp) {
-            const date = new Date(timestamp);
-            const formattedDate = date.toISOString().split('T')[0];
-            const formattedTime = date.toTimeString().split(' ')[0];
-            return { date: formattedDate, time: formattedTime };
-        }
-
         function fetchEnvironmentData(page = 1) {
             fetch('/environment_data')
                 .then(response => response.json())
