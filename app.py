@@ -97,6 +97,16 @@ def fetch_location_data():
     db_connection.close()
     return data
 
+#light
+@app.route('/light_status')
+def fetch_light_status():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute('SELECT * FROM LightStatus ORDER BY LastUpdated DESC LIMIT 1')
+    data = cursor.fetchone()
+    db_connection.close()
+    return jsonify(data)
+
 # # Function to fetch threshold settings from the database
 
 
