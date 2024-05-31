@@ -79,7 +79,7 @@
                 <p>Movement Detected: {{ activity_metrics['movement_detected'] }}</p>
             </div>
             <div class="activity-graph-container">
-                <h2>Activity Graph (Last 30 Minutes)</h2>
+                <h2>Activity Graph (Last 1 Day)</h2>
                 <canvas id="activityGraph"></canvas>
             </div>
 
@@ -100,13 +100,14 @@
             </div>
 
             <div class="container">
-                <h2>In and Out Times Graph (Last 1 hour)</h2>
+                <h2>In and Out Times Graph</h2>
+                <h3> Average Back Home Time: <div id="averageAccessTime"></div></h3>
                 <div class="chart-container">
                     <canvas id="accessTimeChart"></canvas>
                 </div>
             </div>
 
-            <div id="averageAccessTime"></div>
+            
 
         </div>
     </div>
@@ -166,12 +167,12 @@
         });
             }
 
-       function fetchAccessTimeData() {
+        function fetchAccessTimeData() {
             fetch('/last_access_per_day')
                 .then(response => response.json())
                 .then(data => {
                     var labels = data.data.map(entry => entry.date);
-                    var times = data.data.map(entry => new Date(entry.last_access_time).toLocaleTimeString());
+                    var times = data.data.map(entry => entry.last_access_time);
 
                     var ctx = document.getElementById('accessTimeChart').getContext('2d');
                     var accessTimeChart = new Chart(ctx, {

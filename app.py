@@ -616,18 +616,34 @@ def get_time_data():
     db_connection.close()
     return data
 
-def fetch_last_access_per_day():
+
+@app.route('/last_access_per_day')
+def last_access_per_day():
     db_connection = connect_to_database()
     cursor = db_connection.cursor(dictionary=True)
-    query = """
-    SELECT DATE(timestamp) as date, MAX(timestamp) as last_access_time
-    FROM access_logs
-    GROUP BY DATE(timestamp)
-    """
-    cursor.execute(query)
-    data = cursor.fetchall()
+
+    cursor.execute(
+        "SELECT DATE(timestamp) as date, MAX(timestamp) as last_access_time FROM sensor_data GROUP BY DATE(timestamp)")
+    results = cursor.fetchall()
+
+    # Calculate average access time in seconds since midnight
+    total_seconds = 0
+    count = len(results)
+    for entry in results:
+        time = entry['last_access_time']
+        seconds = time.hour * 3600 + time.minute * 60 + time.second
+        total_seconds += seconds
+
+    average_seconds = total_seconds / count if count > 0 else 0
+    average_time = (datetime.min + timedelta(seconds=average_seconds)).time()
+
+    cursor.close()
     db_connection.close()
-    return data
+
+    return jsonify({
+        'average_access_time': average_time.strftime("%H:%M:%S"),
+        'data': results
+    })
 
 def calculate_average_access_time(data):
     total_seconds = 0
