@@ -149,7 +149,7 @@
                             <h3 class="text-center">Historical Data Graphs</h3>
                             <div class="row">
                                 <div class="col-md-12" width="900" height="600">
-                                    <canvas id="environmentChart"></canvas> <!-- Chart container -->
+                                    <canvas id="environmentChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -556,178 +556,42 @@
 
         // Environment
         document.addEventListener('DOMContentLoaded', () => {
-            fetchEnvironmentData();
-
             document.getElementById('dateFilter2').addEventListener('change', function () {
                 const selectedDate = this.value;
                 const startTimestamp = new Date(selectedDate).toISOString();
                 const nextDay = new Date(selectedDate);
                 nextDay.setDate(nextDay.getDate() + 1);
                 const endTimestamp = nextDay.toISOString();
-
                 fetch(`/environment_data?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`)
                     .then(response => response.json())
                     .then(data => {
-                        const environmentDataBody = document.getElementById('environment_data_body');
-                        environmentDataBody.innerHTML = '';
+                        const sensorDataBody = document.getElementById('environment_data_body');
+                        sensorDataBody.innerHTML = '';
+
+                        const temperatureData = [];
+                        const gasData = [];
+
                         data.forEach(entry => {
                             const formattedDateTime = formatDateTime(entry.timestamp);
                             const row = document.createElement('tr');
                             row.innerHTML = `<td>${formattedDateTime.date}</td>
-                                     <td>${formattedDateTime.time}</td>
-                                     <td>${entry.temperature}</td>
-                                     <td>${entry.gas_value}</td>`;
-                            environmentDataBody.appendChild(row);
+                             <td>${formattedDateTime.time}</td>
+                             <td>${entry.temperature}</td>
+                             <td>${entry.gas}</td>`;
+                            sensorDataBody.appendChild(row);
+
+                            // Push temperature and gas values for chart
+                            temperatureData.push(entry.temperature);
+                            gasData.push(entry.gas);
                         });
-                        renderChart(data);
+
+                        // Update chart with filtered data
+                        updateChart(temperatureData, gasData);
                     })
-                    .catch(error => console.error('Error filtering environment data by timestamp range:', error));
+                    .catch(error => console.error('Error filtering sensor data by timestamp range:', error));
             });
         });
 
-        function fetchEnvironmentData(page = 1) {
-            fetch('/environment_data')
-                .then(response => response.json())
-                .then(data => {
-                    const rowsPerPage = 20;
-                    displayDataWithPagination(data, page, rowsPerPage);
-                    renderChart(data);
-                })
-                .catch(error => console.error('Error fetching environment data:', error));
-        }
-
-        function displayDataWithPagination(data, page, rowsPerPage) {
-            const sensorDataBody = document.getElementById('environment_data_body');
-            sensorDataBody.innerHTML = '';
-
-            // Calculate pagination details
-            const totalRows = data.length;
-            const totalPages = Math.ceil(totalRows / rowsPerPage);
-            const start = (page - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-
-            // Display rows for the current page
-            data.slice(start, end).forEach(entry => {
-                const formattedDateTime = formatDateTime(entry.timestamp);
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${formattedDateTime.date}</td>
-                         <td>${formattedDateTime.time}</td>
-                         <td>${entry.temperature}</td>
-                         <td>${entry.gas_value}</td>`;
-                sensorDataBody.appendChild(row);
-            });
-
-            // Update pagination
-            const pagination = document.getElementById('pagination2');
-            pagination.innerHTML = '';
-            const maxVisiblePages = 5; // Maximum number of pages to display
-            let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
-            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-            if (endPage - startPage + 1 < maxVisiblePages) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-            }
-
-            if (totalPages > maxVisiblePages && startPage > 1) {
-                const liFirst = document.createElement('li');
-                liFirst.className = 'page-item';
-                const aFirst = document.createElement('a');
-                aFirst.className = 'page-link';
-                aFirst.href = '#';
-                aFirst.innerText = '1';
-                aFirst.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    fetchEnvironmentData(1);
-                });
-                liFirst.appendChild(aFirst);
-                pagination.appendChild(liFirst);
-
-                const liEllipsis = document.createElement('li');
-                liEllipsis.className = 'page-item disabled';
-                const aEllipsis = document.createElement('a');
-                aEllipsis.className = 'page-link';
-                aEllipsis.href = '#';
-                aEllipsis.innerText = '...';
-                liEllipsis.appendChild(aEllipsis);
-                pagination.appendChild(liEllipsis);
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                const li = document.createElement('li');
-                li.className = `page-item ${i === page ? 'active' : ''}`;
-                const a = document.createElement('a');
-                a.className = 'page-link';
-                a.href = '#';
-                a.innerText = i;
-                a.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    fetchEnvironmentData(i);
-                });
-                li.appendChild(a);
-                pagination.appendChild(li);
-            }
-
-            if (totalPages > maxVisiblePages && endPage < totalPages) {
-                const liEllipsis = document.createElement('li');
-                liEllipsis.className = 'page-item disabled';
-                const aEllipsis = document.createElement('a');
-                aEllipsis.className = 'page-link';
-                aEllipsis.href = '#';
-                aEllipsis.innerText = '...';
-                liEllipsis.appendChild(aEllipsis);
-                pagination.appendChild(liEllipsis);
-
-                const liLast = document.createElement('li');
-                liLast.className = 'page-item';
-                const aLast = document.createElement('a');
-                aLast.className = 'page-link';
-                aLast.href = '#';
-                aLast.innerText = totalPages;
-                aLast.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    fetchEnvironmentData(totalPages);
-                });
-                liLast.appendChild(aLast);
-                pagination.appendChild(liLast);
-            }
-        }
-
-        function renderChart(data) {
-            const ctx = document.getElementById('environmentChart').getContext('2d');
-            const labels = data.map(entry => new Date(entry.timestamp).toLocaleTimeString());
-            const temperatures = data.map(entry => entry.temperature);
-            const gasValues = data.map(entry => entry.gas_value);
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Temperature',
-                            data: temperatures,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1,
-                            fill: false
-                        },
-                        {
-                            label: 'Gas Value',
-                            data: gasValues,
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            borderWidth: 1,
-                            fill: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: { display: true, title: { display: true, text: 'Time' } },
-                        y: { display: true, title: { display: true, text: 'Values' } }
-                    }
-                }
-            });
-        }
 
         // Smartdoor
         document.addEventListener('DOMContentLoaded', () => {
