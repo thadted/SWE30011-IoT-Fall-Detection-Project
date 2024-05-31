@@ -116,6 +116,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
     <script>
+        function formatDateTime(timestamp) {
+                const dateTime = new Date(timestamp);
+                const utcDateTime = new Date(dateTime.getUTCFullYear(), dateTime.getUTCMonth(), dateTime.getUTCDate(),
+                    dateTime.getUTCHours(), dateTime.getUTCMinutes(), dateTime.getUTCSeconds());
+                const year = utcDateTime.getFullYear();
+                const month = ('0' + (utcDateTime.getMonth() + 1)).slice(-2);
+                const day = ('0' + utcDateTime.getDate()).slice(-2);
+                const hours = ('0' + utcDateTime.getHours()).slice(-2);
+                const minutes = ('0' + utcDateTime.getMinutes()).slice(-2);
+                const seconds = ('0' + utcDateTime.getSeconds()).slice(-2);
+                const formattedDate = `${day}/${month}/${year}`;
+                const formattedTime = `${hours}:${minutes}:${seconds}`;
+                return { date: formattedDate, time: formattedTime };
+            }
+            
         document.addEventListener('DOMContentLoaded', function () {
             fetchActivityData();
             fetchLocationData();
@@ -168,65 +183,51 @@
             }
 
         function fetchAccessTimeData() {
-            fetch('/last_access_per_day')
-                .then(response => response.json())
-                .then(data => {
-                    var labels = data.data.map(entry => entry.date);
-                    var times = data.data.map(entry => entry.last_access_time);
+                fetch('/last_access_per_day')
+                    .then(response => response.json())
+                    .then(data => {
+                        var labels = data.data.map(entry => formatDateTime(entry.date));
+                        var times = data.data.map(entry => entry.last_access_time);
 
-                    var ctx = document.getElementById('accessTimeChart').getContext('2d');
-                    var accessTimeChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Last Access Time',
-                                data: times,
-                                borderColor: 'rgba(75, 192, 192, 1)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                x: {
-                                    type: 'time',
-                                    time: {
-                                        unit: 'day'
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: false,
-                                    type: 'time',
-                                    time: {
-                                        unit: 'minute',
-                                        tooltipFormat: 'HH:mm:ss',
-                                        displayFormats: {
-                                            minute: 'HH:mm'
+                        var ctx = document.getElementById('accessTimeChart').getContext('2d');
+                        var accessTimeChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Last Access Time',
+                                    data: times,
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    x: {
+                                        type: 'time',
+                                        time: {
+                                            unit: 'day'
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: false,
+                                        type: 'time',
+                                        time: {
+                                            unit: 'minute',
+                                            tooltipFormat: 'HH:mm:ss',
+                                            displayFormats: {
+                                                minute: 'HH:mm'
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                    });
+                        });
 
-                    document.getElementById('averageAccessTime').innerText = data.average_access_time;
-                })
-                .catch(error => console.error('Error fetching data:', error));
-        }
-
-        function calculateAverageAccessTime(data) {
-                let totalSeconds = 0;
-                const count = data.length;
-                for (const entry of data) {
-                    const timestamp = entry.last_access_time;
-                    const time = new Date(timestamp);
-                    const seconds = time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds();
-                    totalSeconds += seconds;
-                }
-                const averageSeconds = totalSeconds / count;
-                const averageTime = new Date(0, 0, 0, 0, 0, averageSeconds).toLocaleTimeString();
-                return averageTime;
-        }
+                        document.getElementById('averageAccessTime').innerText = data.average_access_time;
+                    })
+                    .catch(error => console.error('Error fetching data:', error));
+            }
 
         function getRandomColor() {
             var letters = '0123456789ABCDEF';

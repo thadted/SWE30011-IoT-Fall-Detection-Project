@@ -8,9 +8,24 @@ import time
 import pytz
 import threading
 app = Flask(__name__)
-
+import requests
 # Function to establish database connection
 
+
+def send_message(token, chat_id, text):
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": text
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    return response.json()
+
+bot_token = '6716374792:AAFjcuTDMuzO5ZGSM2zsWy1gKg4AihLlV54'
+chat_id = '-4213740719'
 
 def connect_to_database():
     return mysql.connector.connect(
@@ -616,34 +631,91 @@ def get_time_data():
     db_connection.close()
     return data
 
-
 @app.route('/last_access_per_day')
 def last_access_per_day():
-    db_connection = connect_to_database()
-    cursor = db_connection.cursor(dictionary=True)
+    try:
+        db_connection = connect_to_database()
+        cursor = db_connection.cursor(dictionary=True)
 
-    cursor.execute(
-        "SELECT DATE(timestamp) as date, MAX(timestamp) as last_access_time FROM sensor_data GROUP BY DATE(timestamp)")
-    results = cursor.fetchall()
+        cursor.execute(
+            "SELECT DATE(timestamp) as date, MAX(timestamp) as last_access_time FROM access_logs GROUP BY DATE(timestamp)"
+        )
+        results = cursor.fetchall()
 
-    # Calculate average access time in seconds since midnight
-    total_seconds = 0
-    count = len(results)
-    for entry in results:
-        time = entry['last_access_time']
-        seconds = time.hour * 3600 + time.minute * 60 + time.second
-        total_seconds += seconds
+        # Calculate average access time in seconds since midnight
+        total_seconds = 0
+        count = len(results)
+        dates_with_access = {entry['date'] for entry in results}
 
-    average_seconds = total_seconds / count if count > 0 else 0
-    average_time = (datetime.min + timedelta(seconds=average_seconds)).time()
+        # Get the date range
+        if results:
+            start_date = min(dates_with_access)
+            end_date = max(dates_with_access)
+        else:
+            start_date = end_date = datetime.today().date()
 
-    cursor.close()
-    db_connection.close()
+        # Check for missing days
+        missing_days = []
+        current_date = start_date
+        while current_date <= end_date:
+            if current_date not in dates_with_access:
+                missing_days.append(current_date)
+            current_date += timedelta(days=1)
 
-    return jsonify({
-        'average_access_time': average_time.strftime("%H:%M:%S"),
-        'data': results
-    })
+        # Set the average time to 8 AM for testing purposes
+        average_time = datetime.strptime("08:00:00", "%H:%M:%S").time()
+
+        no_access_after_average_time = []
+
+        for entry in results:
+            time = entry['last_access_time']
+            if isinstance(time, str):
+                time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
+            seconds = time.hour * 3600 + time.minute * 60 + time.second
+            total_seconds += seconds
+
+            if time.time() <= average_time:
+                no_access_after_average_time.append(entry['date'])
+
+        # Check for today's access logs
+        today = datetime.today().date()
+        today_access_logs = [
+            entry for entry in results if entry['date'] == today]
+
+        if not today_access_logs:
+            no_access_after_average_time.append(today)
+        else:
+            last_access_time_today = today_access_logs[0]['last_access_time']
+            if isinstance(last_access_time_today, str):
+                last_access_time_today = datetime.strptime(
+                    last_access_time_today, '%Y-%m-%d %H:%M:%S')
+            if last_access_time_today.time() <= average_time:
+                no_access_after_average_time.append(today)
+
+        # Send a Telegram message if there are days with no access after the average time
+        if no_access_after_average_time:
+            message = f"No access after {average_time.strftime('%H:%M:%S')} on the following days: {', '.join(map(str, no_access_after_average_time))}"
+            send_message(bot_token, chat_id, message)
+
+        cursor.close()
+        db_connection.close()
+
+        # Formatting the results properly for JSON response
+        formatted_results = [
+            {
+                'date': entry['date'].strftime('%Y-%m-%d'),
+                'last_access_time': entry['last_access_time'].strftime('%Y-%m-%d %H:%M:%S')
+            } for entry in results
+        ]
+
+        return jsonify({
+            'average_access_time': average_time.strftime("%H:%M:%S"),
+            'data': formatted_results
+        })
+
+    except Exception as e:
+        # Return error message if any exception occurs
+        return jsonify({'error': str(e)}), 500
 
 def calculate_average_access_time(data):
     total_seconds = 0
