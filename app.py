@@ -97,18 +97,58 @@ def fetch_location_data():
     db_connection.close()
     return data
 
+
 #light
-@app.route('/light_status')
-def fetch_light_status():
-    db_connection = connect_to_database()
-    cursor = db_connection.cursor(dictionary=True)
-    cursor.execute('SELECT * FROM LightStatus ORDER BY LastUpdated DESC LIMIT 1')
-    data = cursor.fetchone()
-    db_connection.close()
-    return jsonify(data)
+
+# Function to fetch LED status from the database
+def fetch_led_status(room):
+    try:
+        db_connection = connect_to_database()
+        cursor = db_connection.cursor(dictionary=True)
+        cursor.execute('SELECT Status FROM light_status WHERE Room = %s', (room,))
+        result = cursor.fetchone()
+        db_connection.close()
+        return result['Status'] if result else None
+    except Exception as e:
+        print(f"Error fetching LED status: {str(e)}")
+        return None
+
+# Function to update LED status in the database
+def update_led_status(room, status):
+    try:
+        db_connection = connect_to_database()
+        cursor = db_connection.cursor(dictionary=True)
+        cursor.execute('UPDATE light_status SET Status = %s WHERE Room = %s', (status, room))
+        db_connection.commit()
+        db_connection.close()
+        return True, "LED status updated successfully."
+    except Exception as e:
+        return False, f"Error updating LED status: {str(e)}"
+
+@app.route('/change_status', methods=['POST'])
+def change_status():
+    room = request.form.get('room')
+    status = request.form.get('status')
+
+    # Fetch the current LED status from the database
+    current_status = fetch_led_status(room)
+    
+    if current_status is None:
+        return "Room not found in the database.", 404
+
+    if current_status == status:
+        return f"LED status for room '{room}' is already '{status}'."
+
+    # Update the LED status in the database
+    success, message = update_led_status(room, status)
+    
+    if success:
+        return message
+    else:
+        return message, 500  # Return a server error status code if the update fails
+
 
 # # Function to fetch threshold settings from the database
-
 
 def fetch_thresholds():
     db_connection = connect_to_database()
