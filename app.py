@@ -660,15 +660,6 @@ def calculate_average_access_time(data):
     average_time = str(timedelta(seconds=average_seconds))
     return average_time
 
-@app.route('/last_access_per_day')
-def last_access_per_day():
-    data = fetch_last_access_per_day()
-    average_time = calculate_average_access_time(data)
-    return jsonify({
-        'data': data,
-        'average_access_time': average_time
-    })
-
 @app.route('/insights')
 def insights():
     # Get movement data from the database
