@@ -606,6 +606,68 @@ def get_location_data():
     db_connection.close()
     return data
 
+#location analyze
+def get_time_data():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    cursor.execute(
+        'SELECT * FROM access_logs WHERE timestamp >= NOW() - INTERVAL 1 HOUR')
+    data = cursor.fetchall()
+    db_connection.close()
+    return data
+
+
+@app.route('/last_access_per_day')
+def last_access_per_day():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+
+    cursor.execute(
+        "SELECT DATE(timestamp) as date, MAX(timestamp) as last_access_time FROM sensor_data GROUP BY DATE(timestamp)")
+    results = cursor.fetchall()
+
+    # Calculate average access time in seconds since midnight
+    total_seconds = 0
+    count = len(results)
+    for entry in results:
+        time = entry['last_access_time']
+        seconds = time.hour * 3600 + time.minute * 60 + time.second
+        total_seconds += seconds
+
+    average_seconds = total_seconds / count if count > 0 else 0
+    average_time = (datetime.min + timedelta(seconds=average_seconds)).time()
+
+    cursor.close()
+    db_connection.close()
+
+    return jsonify({
+        'average_access_time': average_time.strftime("%H:%M:%S"),
+        'data': results
+    })
+
+def calculate_average_access_time(data):
+    total_seconds = 0
+    count = 0
+    for entry in data:
+        timestamp = entry['last_access_time']
+        if isinstance(timestamp, datetime):
+            timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S').time()
+        seconds = time.hour * 3600 + time.minute * 60 + time.second
+        total_seconds += seconds
+        count += 1
+    average_seconds = total_seconds // count if count else 0
+    average_time = str(timedelta(seconds=average_seconds))
+    return average_time
+
+@app.route('/last_access_per_day')
+def last_access_per_day():
+    data = fetch_last_access_per_day()
+    average_time = calculate_average_access_time(data)
+    return jsonify({
+        'data': data,
+        'average_access_time': average_time
+    })
 
 @app.route('/insights')
 def insights():
@@ -628,14 +690,23 @@ def insights():
     # Fetch location analysis data
     location_data = get_location_data()
 
+    # Fetch location analysis data
+    time_data = get_time_data()
+
     # Format location data for the graph
     formatted_location_data = [
         {'timestamp': data['timestamp'].strftime('%Y-%m-%d %H:%M:%S'), 'location_type': data['location_type']}
         for data in location_data
     ]
 
+    # Format location data for the graph
+    formatted_time_data = [
+        {'timestamp': data['timestamp'].strftime('%Y-%m-%d %H:%M:%S'), 'message': data['message']}
+        for data in time_data
+    ]
+
     # Render the insights template with the activity metrics, activity data, recommendations, and location analysis data
-    return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations, location_data=location_data, formatted_location_data=formatted_location_data)
+    return render_template('insights.html', activity_metrics=activity_metrics, activity_data=activity_data, recommendations=recommendations, location_data=location_data, formatted_location_data=formatted_location_data, time_data=time_data, formatted_time_data=formatted_time_data)
 
 # Function to fetch LED status from the database
 def fetch_led_status(room):
