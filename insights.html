@@ -7,7 +7,7 @@
     <title>SmartHome Dashboard</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="main.css" rel="stylesheet">
+    <link href="static/main.css" rel="stylesheet">
 </head>
 
 <style>
@@ -102,9 +102,11 @@
             <div class="container">
                 <h2>In and Out Times Graph (Last 1 hour)</h2>
                 <div class="chart-container">
-                    <canvas id="TimeChart"></canvas>
+                    <canvas id="accessTimeChart"></canvas>
                 </div>
             </div>
+
+            <div id="averageAccessTime"></div>
 
         </div>
     </div>
@@ -114,16 +116,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Fetch activity data
             fetchActivityData();
-            // Fetch location data
             fetchLocationData();
-             // Fetch time data
-            fetchTimeData();
+            fetchAccessTimeData();
         });
 
         function fetchActivityData() {
-            // Fetch activity data and display in the activity graph
             var ctx = document.getElementById('activityGraph').getContext('2d');
             var activityData = {{ activity_data | tojson
         }};
@@ -166,91 +164,67 @@
                 }
             }
         });
+            }
+
+       function fetchAccessTimeData() {
+            fetch('/last_access_per_day')
+                .then(response => response.json())
+                .then(data => {
+                    var labels = data.data.map(entry => entry.date);
+                    var times = data.data.map(entry => new Date(entry.last_access_time).toLocaleTimeString());
+
+                    var ctx = document.getElementById('accessTimeChart').getContext('2d');
+                    var accessTimeChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Last Access Time',
+                                data: times,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                x: {
+                                    type: 'time',
+                                    time: {
+                                        unit: 'day'
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: false,
+                                    type: 'time',
+                                    time: {
+                                        unit: 'minute',
+                                        tooltipFormat: 'HH:mm:ss',
+                                        displayFormats: {
+                                            minute: 'HH:mm'
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    document.getElementById('averageAccessTime').innerText = data.average_access_time;
+                })
+                .catch(error => console.error('Error fetching data:', error));
         }
 
-        function fetchLocationData() {
-            // Fetch location data and display in the location bar chart
-            var ctx = document.getElementById('locationChart').getContext('2d');
-            var locationData = {{ formatted_location_data | tojson
-        }};
-
-        // Count occurrences of each location type by day and hour
-        var locationCountsByDayHour = {};
-        locationData.forEach(function (data) {
-            var dayHour = moment(data.timestamp).format('YYYY-MM-DD HH:00:00');
-            if (!locationCountsByDayHour[dayHour]) {
-                locationCountsByDayHour[dayHour] = {};
-            }
-            if (locationCountsByDayHour[dayHour][data.location_type]) {
-                locationCountsByDayHour[dayHour][data.location_type]++;
-            } else {
-                locationCountsByDayHour[dayHour][data.location_type] = 1;
-            }
-        });
-
-        // Prepare data for the chart
-        var labels = Object.keys(locationCountsByDayHour);
-        var datasets = [];
-
-        // Collect all unique location types for colors and labels
-        var allLocations = Array.from(new Set(locationData.map(function (item) {
-            return item.location_type;
-        })));
-
-        allLocations.forEach(function (location) {
-            var data = labels.map(function (label) {
-                return locationCountsByDayHour[label][location] || 0;
-            });
-            datasets.push({
-                label: location,
-                data: data,
-                backgroundColor: getRandomColor(),
-                borderColor: getRandomColor(),
-                borderWidth: 1
-            });
-        });
-
-        var chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        stacked: true,
-                        title: {
-                            display: true,
-                            text: 'Day and Hour'
-                        }
-                    },
-                    y: {
-                        stacked: true,
-                        title: {
-                            display: true,
-                            text: 'Frequency'
-                        }
-                    }
-                },
-                legend: {
-                    position: 'right',
-                },
-                title: {
-                    display: true,
-                    text: 'Most Frequent Location by Hour'
+        function calculateAverageAccessTime(data) {
+                let totalSeconds = 0;
+                const count = data.length;
+                for (const entry of data) {
+                    const timestamp = entry.last_access_time;
+                    const time = new Date(timestamp);
+                    const seconds = time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds();
+                    totalSeconds += seconds;
                 }
-            }
-        });
-}
-
-        function fetchTimeData() {
-                // Fetch location data and display in the location bar chart
-                var ctx = document.getElementById('TimeChart').getContext('2d');
-                var locationData = {{ formatted_location_data | tojson
-            }};
+                const averageSeconds = totalSeconds / count;
+                const averageTime = new Date(0, 0, 0, 0, 0, averageSeconds).toLocaleTimeString();
+                return averageTime;
         }
 
         function getRandomColor() {
@@ -262,7 +236,78 @@
             return color;
         }
 
-    </script>
-</body>
+        function fetchLocationData() {
+                var ctx = document.getElementById('locationChart').getContext('2d');
+                var locationData = {{ formatted_location_data | tojson
+            }};
+            var locationCountsByDayHour = {};
+            locationData.forEach(function (data) {
+                var dayHour = moment(data.timestamp).format('YYYY-MM-DD HH:00:00');
+                if (!locationCountsByDayHour[dayHour]) {
+                    locationCountsByDayHour[dayHour] = {};
+                }
+                if (locationCountsByDayHour[dayHour][data.location_type]) {
+                    locationCountsByDayHour[dayHour][data.location_type]++;
+                } else {
+                    locationCountsByDayHour[dayHour][data.location_type] = 1;
+                }
+            });
 
-</html>
+            var labels = Object.keys(locationCountsByDayHour);
+            var datasets = [];
+            var allLocations = Array.from(new Set(locationData.map(function (item) {
+                return item.location_type;
+            })));
+
+            allLocations.forEach(function (location) {
+                var data = labels.map(function (label) {
+                    return locationCountsByDayHour[label][location] || 0;
+                });
+                datasets.push({
+                    label: location,
+                    data: data,
+                    backgroundColor: getRandomColor(),
+                    borderColor: getRandomColor(),
+                    borderWidth: 1
+                });
+            });
+
+            var chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: 'Day and Hour'
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: 'Frequency'
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Most Frequent Location by Hour'
+                    }
+                }
+            });
+        }
+    </script>
+    </body>
+    
+    </html>

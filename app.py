@@ -616,6 +616,42 @@ def get_time_data():
     db_connection.close()
     return data
 
+def fetch_last_access_per_day():
+    db_connection = connect_to_database()
+    cursor = db_connection.cursor(dictionary=True)
+    query = """
+    SELECT DATE(timestamp) as date, MAX(timestamp) as last_access_time
+    FROM access_logs
+    GROUP BY DATE(timestamp)
+    """
+    cursor.execute(query)
+    data = cursor.fetchall()
+    db_connection.close()
+    return data
+
+def calculate_average_access_time(data):
+    total_seconds = 0
+    count = 0
+    for entry in data:
+        timestamp = entry['last_access_time']
+        if isinstance(timestamp, datetime):
+            timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        time = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S').time()
+        seconds = time.hour * 3600 + time.minute * 60 + time.second
+        total_seconds += seconds
+        count += 1
+    average_seconds = total_seconds // count if count else 0
+    average_time = str(timedelta(seconds=average_seconds))
+    return average_time
+
+@app.route('/last_access_per_day')
+def last_access_per_day():
+    data = fetch_last_access_per_day()
+    average_time = calculate_average_access_time(data)
+    return jsonify({
+        'data': data,
+        'average_access_time': average_time
+    })
 
 @app.route('/insights')
 def insights():
@@ -638,17 +674,18 @@ def insights():
     # Fetch location analysis data
     location_data = get_location_data()
 
+    # Fetch location analysis data
+    time_data = get_time_data()
+
     # Format location data for the graph
     formatted_location_data = [
         {'timestamp': data['timestamp'].strftime('%Y-%m-%d %H:%M:%S'), 'location_type': data['location_type']}
         for data in location_data
     ]
 
-    time_data = get_time_data()
-
-     # Format location data for the graph
+    # Format location data for the graph
     formatted_time_data = [
-        {'timestamp': data['timestamp'].strftime('%Y-%m-%d %H:%M:%S'), 'location_type': data['location_type']}
+        {'timestamp': data['timestamp'].strftime('%Y-%m-%d %H:%M:%S'), 'message': data['message']}
         for data in time_data
     ]
 
