@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Threshold Settings</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="static/main.css" rel="stylesheet">
 </head>
 
@@ -59,224 +60,383 @@
             </li>
         </ul>
     </nav>
+
+   <!-- Main Content -->
     <div class="main-content">
-        <div class="container mt-4 mb-4">
-            <h1 class="text-center"> Actuators </h1>
-            <div class="card col-md-12">
-                <br />
-                <br />
-                <br />
-                <form id="manualSettingsForm" class="center">
-                    <label for="buzzerActivation">Activate Buzzer:</label>
-                    <div class="form-group row">
-                        <div class="col-md-8">
-                            <select class="form-control" id="buzzerActivation" name="buzzerActivation">
-                                <option value="0">Off</option>
-                                <option value="1">On</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-center justify-content-center">
-                            <button type="button" class="btn btn-primary" id="saveBuzzerActivation">Save</button>
-                        </div>
-                    </div>
-                </form>
-                <br />
-                <form id="manualSettingsForm" class="center">
-                    <label for="ledActivation">Activate LED:</label>
-                    <div class="form-group row">
-                        <div class="col-md-8">
-                            <select class="form-control" id="ledActivation" name="ledActivation">
-                                <option value="0">Off</option>
-                                <option value="1">On</option>
-                                <option value="2">Auto</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-center justify-content-center">
-                            <button type="button" class="btn btn-primary" id="saveLedActivation">Save</button>
-                        </div>
-                    </div>
-                </form>
+        <!-- Button -->
+        <div class="container">
+            <h1 class="text-center">Settings</h1>
+            <div class="text-center">
+                <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" id="pills-home-tab" data-toggle="pill" href="#pills-home" role="tab"
+                            aria-controls="pills-home" aria-selected="true">SmartBand</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab"
+                            aria-controls="pills-profile" aria-selected="false">Environment</a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" id="pills-contact-tab" data-toggle="pill" href="#pills-contact" role="tab"
+                            aria-controls="pills-contact" aria-selected="false">SmartDoor</a>
+                    </li>
+                </ul>
             </div>
-            <br />
-            <br />
-            <br />
-            <h1 class="text-center">Threshold Settings</h1>
-            <br />
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="card amp">
-                        <h2 class="text-center">Amplitude</h2>
-                        <br />
-                        <form id="thresholdForm" class="center">
-                            <label for="fallThreshold" class="mt-2">Fall Threshold:</label>
-                            <div class="form-group row">
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="fallThreshold" name="fallThreshold"
-                                        required data-toggle="tooltip" data-placement="top"
-                                        title="The threshold value to trigger potential fall detection">
+
+            <div class="tab-content" id="pills-tabContent">
+                <!-- SmartBand -->
+                <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
+
+                    <div class="container mt-4 mb-4">
+                        <h1 class="text-center"> Actuators </h1>
+                        <div class="card col-md-12">
+                            <br />
+                            <br />
+                            <br />
+                            <form id="manualSettingsForm" class="center">
+                                <label for="buzzerActivation">Activate Buzzer:</label>
+                                <div class="form-group row">
+                                    <div class="col-md-8">
+                                        <select class="form-control" id="buzzerActivation" name="buzzerActivation">
+                                            <option value="0">Off</option>
+                                            <option value="1">On</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-center justify-content-center">
+                                        <button type="button" class="btn btn-primary" id="saveBuzzerActivation">Save</button>
+                                    </div>
                                 </div>
-                                <div class="col d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-primary" id="saveFallThreshold">Save</button>
+                            </form>
+                            <br />
+                            <form id="manualSettingsForm" class="center">
+                                <label for="ledActivation">Activate LED:</label>
+                                <div class="form-group row">
+                                    <div class="col-md-8">
+                                        <select class="form-control" id="ledActivation" name="ledActivation">
+                                            <option value="0">Off</option>
+                                            <option value="1">On</option>
+                                            <option value="2">Auto</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-center justify-content-center">
+                                        <button type="button" class="btn btn-primary" id="saveLedActivation">Save</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <br />
+                        <br />
+                        <br />
+                        <h1 class="text-center">Threshold Settings</h1>
+                        <br />
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card amp">
+                                    <h2 class="text-center">Amplitude</h2>
+                                    <br />
+                                    <form id="thresholdForm" class="center">
+                                        <label for="fallThreshold" class="mt-2">Fall Threshold:</label>
+                                        <div class="form-group row">
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control" id="fallThreshold" name="fallThreshold"
+                                                    required data-toggle="tooltip" data-placement="top"
+                                                    title="The threshold value to trigger potential fall detection">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary" id="saveFallThreshold">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <br />
+                                    <form id="thresholdForm" class="center">
+                                        <label for="fallCheckDuration" class="mt-2">Fall Check Duration:</label>
+                                        <div class="form-group row">
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control" id="fallCheckDuration"
+                                                    name="fallCheckDuration" required data-toggle="tooltip" data-placement="top"
+                                                    title="The total duration to predict fall when potential fall detected">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary mt-2"
+                                                    id="saveFallCheckDuration">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <br />
+                                    <form id="thresholdForm" class="center">
+                                        <label for="fallChangeThreshold" class="mt-2">Fall Change Threshold:</label>
+                                        <div class="form-group row">
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control" id="fallChangeThreshold"
+                                                    name="fallChangeThreshold" required data-toggle="tooltip" data-placement="top"
+                                                    title="The threshold value for real fall detection">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary"
+                                                    id="saveFallChangeThreshold">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
-                        </form>
-                        <br />
-                        <form id="thresholdForm" class="center">
-                            <label for="fallCheckDuration" class="mt-2">Fall Check Duration:</label>
-                            <div class="form-group row">
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="fallCheckDuration"
-                                        name="fallCheckDuration" required data-toggle="tooltip" data-placement="top"
-                                        title="The total duration to predict fall when potential fall detected">
-                                </div>
-                                <div class="col d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-primary mt-2"
-                                        id="saveFallCheckDuration">Save</button>
+            
+                            <div class="col-md-6 mb-4">
+                                <div class="card hr">
+                                    <h2 class="text-center">Heart Rate</h2>
+                                    <br />
+                                    <form id="thresholdForm" class="center">
+                                        <label for="lowHr" class="mt-2">Minimum Heart Rate:</label>
+                                        <div class="form-group row">
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control" id="lowHr" name="lowHr" required
+                                                    data-toggle="tooltip" data-placement="top"
+                                                    title="The maximum heart rate value that will trigger unusual heart rate condition time">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary" id="saveLowHr">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <br />
+                                    <form id="thresholdForm" class="center">
+                                        <label for="highHr" class="mt-2">Maximum Heart Rate:</label>
+                                        <div class="form-group row">
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control" id="highHr" name="highHr" required
+                                                    data-toggle="tooltip" data-placement="top"
+                                                    title="The mininum heart rate value that will trigger unusual heart rate condition time">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary" id="saveHighHr">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <br />
+                                    <form id="thresholdForm" class="center">
+                                        <label for="heartRateUnusualMaxTime" class="mt-2">Unusual Heart Rate Duration:</label>
+                                        <div class="form-group row">
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control" id="heartRateUnusualMaxTime"
+                                                    name="heartRateUnusualMaxTime" required data-toggle="tooltip"
+                                                    data-placement="top"
+                                                    title="The threshold time to confirm unusual heart rate condition">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary"
+                                                    id="saveHeartRateUnusualMaxTime">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
-                        </form>
-                        <br />
-                        <form id="thresholdForm" class="center">
-                            <label for="fallChangeThreshold" class="mt-2">Fall Change Threshold:</label>
-                            <div class="form-group row">
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="fallChangeThreshold"
-                                        name="fallChangeThreshold" required data-toggle="tooltip" data-placement="top"
-                                        title="The threshold value for real fall detection">
-                                </div>
-                                <div class="col d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-primary"
-                                        id="saveFallChangeThreshold">Save</button>
+            
+                            <div class="col-md-6 mb-4">
+                                <div class="card spo2">
+                                    <h2 class="text-center">Oxygen saturation</h2>
+                                    <br />
+                                    <form id="thresholdForm" class="center">
+                                        <label for="lowSpo2" class="mt-2">Minimum SpO2:</label>
+                                        <div class="form-group row">
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control" id="lowSpo2" name="lowSpo2" required
+                                                    data-toggle="tooltip" data-placement="top"
+                                                    title="The maximum SpO2 value  that will trigger unusual SpO2 condition time">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <br />
+                                    <form id="thresholdForm" class="center">
+                                        <label for="highSpO2" class="mt-2">Maximum SpO2:</label>
+                                        <div class="form-group row">
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control" id="highSpO2" name="highSpO2" required
+                                                    data-toggle="tooltip" data-placement="top"
+                                                    title="The mininum SpO2 value that will trigger unusual SpO2 condition time">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary" id="saveHighSpo2">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <br />
+                                    <form id="thresholdForm" class="center">
+                                        <label for="spo2UnusualMaxTime" class="mt-2">Unusual SpO2 Duration:</label>
+                                        <div class="form-group row">
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control" id="spo2UnusualMaxTime"
+                                                    name="spo2UnusualMaxTime" required data-toggle="tooltip" data-placement="top"
+                                                    title="The threshold time to confirm unusual SpO2 condition">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary"
+                                                    id="saveSpo2UnusualMaxTime">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
-                        </form>
+            
+                            <div class="col-md-6 mb-4">
+                                <div class="card ldr">
+                                    <h2 class="text-center">Surronding Light</h2>
+                                    <br />
+                                    <form id="thresholdForm" class="center">
+                                        <label for="lowLdr" class="mt-2">Minimum LDR:</label>
+                                        <div class="form-group row">
+                                            <div class="col-md-8">
+                                                <input type="number" class="form-control" id="lowLdr" name="lowLdr" required
+                                                    data-toggle="tooltip" data-placement="top"
+                                                    title="The lower threshold value to trigger smartband light">
+                                            </div>
+                                            <div class="col d-flex align-items-center justify-content-center">
+                                                <button type="button" class="btn btn-primary" id="saveLowLdr">Save</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Environment -->
+                <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+
+                2
+                <!-- Jason Your Content Go Here -->
+
+                </div>
+                <!-- SmartDoor -->
+                <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
+                
+                    <div class="container mt-4 mb-4">
+                        <h1 class="text-center"> Actuators </h1>
+                
+                        <div class="card col-md-12">
+                            <br />
+                            <br />
+                            <br />
+                
+                            <!-- Form Door -->
+                            <form id="manualSettingsForm" class="center">
+                                <label for="Activation_door">Activate Door:</label>
+                                <div class="form-group row">
+                                    <div class="col-md-8">
+                                        <select class="form-control" id="Activation_door" name="Activation_door">
+                                            <option value="Closed">Off</option>
+                                            <option value="Open">On</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-center justify-content-center">
+                                        <button type="button" class="btn btn-primary" id="saveActivation_door">Save</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <br>
+                
+                            <!-- Form Led -->
+                            <form id="manualSettingsForm" class="center">
+                                <label for="ledActivation_door">Activate LED:</label>
+                                <div class="form-group row">
+                                    <div class="col-md-8">
+                                        <select class="form-control" id="ledActivation_door" name="ledActivation_door">
+                                            <option value="Closed">Off</option>
+                                            <option value="Open">On</option>
+                                            <option value="Auto">Auto</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-center justify-content-center">
+                                        <button type="button" class="btn btn-primary" id="saveLedActivation_door">Save</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <br>
+                
+                            <!-- Form RFID -->
+                            <form id="manualSettingsForm" class="center">
+                                <label for="RFIDActivation_door">Activate RFID:</label>
+                                <div class="form-group row">
+                                    <div class="col-md-8">
+                                        <input type="text" class="form-control" id="RFIDActivation_door" name="RFIDActivation_door"
+                                            placeholder="Enter value">
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-center justify-content-center">
+                                        <button type="button" class="btn btn-primary" id="saveRFIDActivation_door">Save</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <br>
+                
+                            <!-- Display Current UIDs -->
+                            <div>
+                                <h3 class = "text-center">Accessible UIDs</h3>
+                                <ul id="uidList" class="list-group">
+                                    <!-- UIDs will be populated here by JavaScript -->
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-md-6 mb-4">
-                    <div class="card hr">
-                        <h2 class="text-center">Heart Rate</h2>
-                        <br />
-                        <form id="thresholdForm" class="center">
-                            <label for="lowHr" class="mt-2">Minimum Heart Rate:</label>
-                            <div class="form-group row">
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="lowHr" name="lowHr" required
-                                        data-toggle="tooltip" data-placement="top"
-                                        title="The maximum heart rate value that will trigger unusual heart rate condition time">
-                                </div>
-                                <div class="col d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-primary" id="saveLowHr">Save</button>
-                                </div>
-                            </div>
-                        </form>
-                        <br />
-                        <form id="thresholdForm" class="center">
-                            <label for="highHr" class="mt-2">Maximum Heart Rate:</label>
-                            <div class="form-group row">
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="highHr" name="highHr" required
-                                        data-toggle="tooltip" data-placement="top"
-                                        title="The mininum heart rate value that will trigger unusual heart rate condition time">
-                                </div>
-                                <div class="col d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-primary" id="saveHighHr">Save</button>
-                                </div>
-                            </div>
-                        </form>
-                        <br />
-                        <form id="thresholdForm" class="center">
-                            <label for="heartRateUnusualMaxTime" class="mt-2">Unusual Heart Rate Duration:</label>
-                            <div class="form-group row">
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="heartRateUnusualMaxTime"
-                                        name="heartRateUnusualMaxTime" required data-toggle="tooltip"
-                                        data-placement="top"
-                                        title="The threshold time to confirm unusual heart rate condition">
-                                </div>
-                                <div class="col d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-primary"
-                                        id="saveHeartRateUnusualMaxTime">Save</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="col-md-6 mb-4">
-                    <div class="card spo2">
-                        <h2 class="text-center">Oxygen saturation</h2>
-                        <br />
-                        <form id="thresholdForm" class="center">
-                            <label for="lowSpo2" class="mt-2">Minimum SpO2:</label>
-                            <div class="form-group row">
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="lowSpo2" name="lowSpo2" required
-                                        data-toggle="tooltip" data-placement="top"
-                                        title="The maximum SpO2 value  that will trigger unusual SpO2 condition time">
-                                </div>
-                                <div class="col d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-primary">Save</button>
-                                </div>
-                            </div>
-                        </form>
-                        <br />
-                        <form id="thresholdForm" class="center">
-                            <label for="highSpO2" class="mt-2">Maximum SpO2:</label>
-                            <div class="form-group row">
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="highSpO2" name="highSpO2" required
-                                        data-toggle="tooltip" data-placement="top"
-                                        title="The mininum SpO2 value that will trigger unusual SpO2 condition time">
-                                </div>
-                                <div class="col d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-primary" id="saveHighSpo2">Save</button>
-                                </div>
-                            </div>
-                        </form>
-                        <br />
-                        <form id="thresholdForm" class="center">
-                            <label for="spo2UnusualMaxTime" class="mt-2">Unusual SpO2 Duration:</label>
-                            <div class="form-group row">
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="spo2UnusualMaxTime"
-                                        name="spo2UnusualMaxTime" required data-toggle="tooltip" data-placement="top"
-                                        title="The threshold time to confirm unusual SpO2 condition">
-                                </div>
-                                <div class="col d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-primary"
-                                        id="saveSpo2UnusualMaxTime">Save</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="col-md-6 mb-4">
-                    <div class="card ldr">
-                        <h2 class="text-center">Surronding Light</h2>
-                        <br />
-                        <form id="thresholdForm" class="center">
-                            <label for="lowLdr" class="mt-2">Minimum LDR:</label>
-                            <div class="form-group row">
-                                <div class="col-md-8">
-                                    <input type="number" class="form-control" id="lowLdr" name="lowLdr" required
-                                        data-toggle="tooltip" data-placement="top"
-                                        title="The lower threshold value to trigger smartband light">
-                                </div>
-                                <div class="col d-flex align-items-center justify-content-center">
-                                    <button type="button" class="btn btn-primary" id="saveLowLdr">Save</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
     <script>
+       document.addEventListener('DOMContentLoaded', function () {
+            // Function to fetch UIDs and populate the list
+            function fetchUIDs() {
+                fetch('/get_uids')
+                    .then(response => response.json())
+                    .then(data => {
+                        const uidList = document.getElementById('uidList');
+                        uidList.innerHTML = ''; // Clear the list before adding new items
+                        data.forEach(uid => {
+                            const listItem = document.createElement('li');
+                            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                            listItem.textContent = uid.uid;
+
+                            const deleteButton = document.createElement('button');
+                            deleteButton.className = 'btn btn-danger btn-sm';
+                            deleteButton.textContent = 'Delete';
+                            deleteButton.onclick = function () {
+                                deleteUID(uid.uid);
+                            };
+
+                            listItem.appendChild(deleteButton);
+                            uidList.appendChild(listItem);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching UIDs:', error));
+            }
+
+            // Function to delete a UID
+            function deleteUID(uid) {
+                fetch(`/delete_uid/${uid}`, { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.message);
+                        fetchUIDs(); // Refresh the list after deletion
+                    })
+                    .catch(error => console.error('Error deleting UID:', error));
+            }
+
+            // Fetch UIDs when the page loads
+            fetchUIDs();
+
+            setInterval(fetchUIDs, 10000);
+        });
+
         $(document).ready(function () {
             // Function to fetch and display current threshold values
             function fetchThresholds() {
@@ -302,8 +462,44 @@
                     });
             }
 
+            //Environment
+            function fetchThresholds_environment() {
+                fetch('/get_thresholds_environment')
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#lowHr').val(data.low_hr);
+                        $('#lowSpo2').val(data.low_spo2);
+                        $('#fallThreshold').val(data.fall_threshold);
+                        $('#fallCheckDuration').val(data.fall_check_duration);
+                        $('#fallChangeThreshold').val(data.fall_change_threshold);
+                        $('#highSpO2').val(data.high_spo2);
+                        $('#spo2UnusualMaxTime').val(data.spo2_unusual_max_time);
+                        $('#highHr').val(data.high_hr);
+                        $('#heartRateUnusualMaxTime').val(data.heart_rate_unusual_max_time);
+                        $('#lowLdr').val(data.low_ldr);
+
+                        // Update Buzzer activation state
+                        $('#buzzerActivation').val(data.buzzer_activation);
+
+                        // Update LED activation state
+                        $('#ledActivation').val(data.led_activation);
+                    });
+            }
+
+            //Smartdoor
+            function fetchThresholds_door() {
+                fetch('/get_thresholds_door')
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#ledActivation_door').val(data.led_status);
+                        $('#Activation_door').val(data.door_status);
+                    });
+            }
+
             // Fetch and display current threshold values on page load
             fetchThresholds();
+            fetchThresholds_environment();
+            fetchThresholds_door();
 
             // Save Low HR Threshold
             $('#saveLowHr').click(function () {
@@ -367,6 +563,23 @@
                 saveThreshold('led_activation', ledState);
             });
 
+            //Led Activate for door
+            $('#saveLedActivation_door').click(function () {
+                var ledState = $('#ledActivation_door').val();
+                saveThreshold_door('led_status', ledState);
+            });
+
+            //door Activate
+            $('#saveActivation_door').click(function () {
+                var ledState = $('#Activation_door').val();
+                saveThreshold_door('door_status', ledState);
+            });
+
+            $('#saveRFIDActivation_door').click(function () {
+                var ledState = $('#RFIDActivation_door').val();
+                saveRFID('uid', ledState);
+            });
+
             // Function to save threshold value
             function saveThreshold(name, value) {
                 $.ajax({
@@ -394,7 +607,92 @@
                     }
                 });
             }
+
+            //Environment
+            function saveThreshold_environment(name, value) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/save_threshold',
+                    data: {
+                        name: name,
+                        value: value
+                    },
+                    success: function () {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Value changed successfully!.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    error: function () {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to save value.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+
+            //Smartdoor
+            function saveThreshold_door(name, value) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/save_threshold_door',
+                    data: {
+                        name: name,
+                        value: value
+                    },
+                    success: function () {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Value changed successfully!.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    error: function () {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to save value.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+
+            function saveRFID(name, value) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/save_rfid',
+                    data: {
+                        name: name,
+                        value: value
+                    },
+                    success: function () {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Value changed successfully!.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    error: function () {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Failed to save value.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
         });
+
+
     </script>
 
 </body>

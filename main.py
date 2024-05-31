@@ -195,10 +195,8 @@ while True:
             ser.write(b'Bright\n')
 
         if movement_state == 1:
-            ser.write(b'Notify\n')
-            print("notify")
-        else:
-            ser.write(b'StopNotify|n')
+            ser.write(b'1\n')
+            print('notify')
 
         # Process sensor data received from Arduino
         if data.startswith("Amp="):

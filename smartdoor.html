@@ -114,16 +114,31 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script>
-        function fetchData() {
-            fetch('/data2')
+        function fetch_smartdoor_data() {
+            fetch('/smartdoor_data')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('rfid').innerText = data.rfid;
-                    document.getElementById('msg').innerText = data.msg;
-                    document.getElementById('time').innerText = data.time;
+                    document.getElementById('msg').innerText = data.message;
+                    document.getElementById('time').innerText = data.timestamp;
                 });
         }
-        fetchData()
+
+        function fetch_smartdoor_status() {
+            fetch('/smartdoor_status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('door_status').innerText = data.door_status;
+                    document.getElementById('led_status').innerText = data.led_status;
+                });
+        }
+
+        setInterval(fetch_smartdoor_data, 5000);
+        setInterval(fetch_smartdoor_status, 5000);
+        window.onload = function () {
+            fetch_smartdoor_data()
+            fetch_smartdoor_status()
+        }
     </script>
 
 </body>
