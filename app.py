@@ -140,28 +140,6 @@ def update_led_status(room, status):
     except Exception as e:
         return False, f"Error updating LED status: {str(e)}"
 
-@app.route('/change_status', methods=['POST'])
-def change_status():
-    room = request.form.get('room')
-    status = request.form.get('status')
-
-    # Fetch the current LED status from the database
-    current_status = fetch_led_status(room)
-    
-    if current_status is None:
-        return "Room not found in the database.", 404
-
-    if current_status == status:
-        return f"LED status for room '{room}' is already '{status}'."
-
-    # Update the LED status in the database
-    success, message = update_led_status(room, status)
-    
-    if success:
-        return message
-    else:
-        return message, 500  # Return a server error status code if the update fails
-
 
 # # Function to fetch threshold settings from the database
 
