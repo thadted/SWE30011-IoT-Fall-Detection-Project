@@ -43,8 +43,8 @@
                 <a href="{{ url_for('notifications') }}" class="nav-link btn my-2">Notification</a>
             </li>
             <li class="nav-item">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-graph-up"
-                    viewBox="0 0 16 16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-graph-up" viewBox="0 0 16 16">
                     <path fill-rule="evenodd"
                         d="M0 0h1v15h15v1H0zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07" />
                 </svg>
@@ -54,7 +54,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                     class="bi bi-gear-fill" viewBox="0 0 16 16">
                     <path
-                        d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                        d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1-.872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
                 </svg>
                 <a href="{{ url_for('settings') }}" class="nav-link btn my-2">Settings</a>
             </li>
@@ -79,7 +79,7 @@
                                 </div>
 
                                 <div class="card-body">
-                                    <p class="card-text">Location Type: <span id="location-info"></span></p>
+                                    <p class="card-text">Location Type: <span id="location-info"></span> </p>
                                     <p class="card-text">Timestamp: <span id="timestamp-info"></span></p>
                                 </div>
                             </div>
@@ -90,8 +90,9 @@
                 <br />
                 <br />
 
-                <h2 class="text-center col-md-12" style="margin-top:20px;"> Sensor Data Graph</h2>
+                <h2 class="text-center col-md-12" style="margin-top:20px;"> Sensor Data</h2>
                 <br />
+
                 <div class="row text-center mx-auto">
                     <div class="col-md-6">
                         <div class="card">
@@ -99,17 +100,19 @@
                                 Temperature
                             </div>
                             <div class="card-body">
-                                <canvas id="temperatureChart" height="200"></canvas>
+                                <p class="card-text">Temperature: <span id="temperature-info"></span>°C</p>
+                                <p class="card-text">Timestamp: <span id="temperature-timestamp-info"></span></p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
-                                Gas Data
+                                Gas Value
                             </div>
                             <div class="card-body">
-                                <canvas id="gasChart" height="200"></canvas>
+                                <p class="card-text"> Gas Value: <span id="gas-info"></span></p>
+                                <p class="card-text">Timestamp: <span id="gas-timestamp-info"></span></p>
                             </div>
                         </div>
                     </div>
@@ -127,85 +130,54 @@
                 .then(data => {
                     const locationType = data.location_type;
                     const timestamp = data.timestamp;
-                    const formattedTimestamp = new Date(timestamp).toLocaleString();
+                    const formattedTimestamp = formatDateTime(timestamp); // Format the timestamp
                     document.getElementById('location-info').innerText = locationType;
-                    document.getElementById('timestamp-info').innerText = formattedTimestamp;
+                    document.getElementById('timestamp-info').innerText = formattedTimestamp.date + ' ' + formattedTimestamp.time;
                 })
                 .catch(error => console.error('Error fetching location data:', error));
         }
 
-        // Function to fetch temperature data
+        // Function to fetch newest temperature data
         function fetchTemperatureData() {
             fetch('/temperature_data')
                 .then(response => response.json())
                 .then(data => {
-                    const timestamps = data.map(entry => new Date(entry.timestamp).toLocaleString());
-                    const temperatures = data.map(entry => entry.temperature);
-
-                    const temperatureChart = document.getElementById('temperatureChart').getContext('2d');
-                    new Chart(temperatureChart, {
-                        type: 'line',
-                        data: {
-                            labels: timestamps,
-                            datasets: [{
-                                label: 'Temperature (°C)',
-                                data: temperatures,
-                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                borderColor: 'rgb(255, 99, 132)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                yAxes: [{
-                                    ticks: {
-                                        beginAtZero: true
-                                    }
-                                }]
-                            }
-                        }
-                    });
+                    const temperature = data.temperature;
+                    const timestamp = data.timestamp;
+                    const formattedTimestamp = formatDateTime(timestamp); // Format the timestamp
+                    document.getElementById('temperature-info').innerText = temperature;
+                    document.getElementById('temperature-timestamp-info').innerText = formattedTimestamp.date + ' ' + formattedTimestamp.time;
                 })
                 .catch(error => console.error('Error fetching temperature data:', error));
         }
 
-        // Function to fetch gas data
+        // Function to fetch newest gas data
         function fetchGasData() {
             fetch('/gas_data')
                 .then(response => response.json())
                 .then(data => {
-                    const timestamps = data.map(entry => new Date(entry.timestamp).toLocaleString());
-                    const gasValues = data.map(entry => entry.gas_value);
-
-                    const gasChart = document.getElementById('gasChart').getContext('2d');
-                    new Chart(gasChart, {
-                        type: 'line',
-                        data: {
-                            labels: timestamps,
-                            datasets: [{
-                                label: 'Gas Value',
-                                data: gasValues,
-                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                borderColor: 'rgb(54, 162, 235)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                yAxes: [{
-                                    ticks: {
-                                        beginAtZero: true
-                                    }
-                                }]
-                            }
-                        }
-                    });
+                    const gasValue = data.gas_value;
+                    const timestamp = data.timestamp;
+                    const formattedTimestamp = formatDateTime(timestamp); // Format the timestamp
+                    document.getElementById('gas-info').innerText = gasValue;
+                    document.getElementById('gas-timestamp-info').innerText = formattedTimestamp.date + ' ' + formattedTimestamp.time;
                 })
                 .catch(error => console.error('Error fetching gas data:', error));
+        }
+
+        function formatDateTime(timestamp) {
+            const dateTime = new Date(timestamp);
+            const utcDateTime = new Date(dateTime.getUTCFullYear(), dateTime.getUTCMonth(), dateTime.getUTCDate(),
+                dateTime.getUTCHours(), dateTime.getUTCMinutes(), dateTime.getUTCSeconds());
+            const year = utcDateTime.getFullYear();
+            const month = ('0' + (utcDateTime.getMonth() + 1)).slice(-2);
+            const day = ('0' + utcDateTime.getDate()).slice(-2);
+            const hours = ('0' + utcDateTime.getHours()).slice(-2);
+            const minutes = ('0' + utcDateTime.getMinutes()).slice(-2);
+            const seconds = ('0' + utcDateTime.getSeconds()).slice(-2);
+            const formattedDate = `${day}/${month}/${year}`;
+            const formattedTime = `${hours}:${minutes}:${seconds}`;
+            return { date: formattedDate, time: formattedTime };
         }
 
         // Fetch data on page load
@@ -215,6 +187,7 @@
             fetchGasData();
         };
     </script>
+
 </body>
 
 </html>
